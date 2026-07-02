@@ -12,3 +12,8 @@
 
 # IDE
 .vscode/
+
+# built files and archives
+*.zip
+**/publish/
+**/wwwroot/

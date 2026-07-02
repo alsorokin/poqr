@@ -21,7 +21,7 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
         }
 
         await RegisterConnection(command.SessionId, command.ParticipantId);
-        await Clients.Caller.SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
+        await Clients.Group(command.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
     }
 
     public async Task StartRound(StartRoundCommand command)
