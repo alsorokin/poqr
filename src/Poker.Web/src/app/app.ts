@@ -14,7 +14,7 @@ import { RoomState, SessionJoinResponse } from './poker.types';
 export class App implements OnInit, OnDestroy {
   participantName = '';
   sessionInput = '';
-  selectedCard: number | null = null;
+  selectedCard: string | null = null;
 
   sessionId: string | null = null;
   participantId: string | null = null;
@@ -110,7 +110,7 @@ export class App implements OnInit, OnDestroy {
     await this.pokerClient.startRound(this.sessionId, this.participantId);
   }
 
-  async vote(cardValue: number): Promise<void> {
+  async vote(cardValue: string): Promise<void> {
     if (!this.sessionId || !this.participantId || !this.currentRoundId || !this.canVote) {
       return;
     }
@@ -143,11 +143,15 @@ export class App implements OnInit, OnDestroy {
 
   revealedVote(participantId: string): string {
     const value = this.roomState?.currentRound?.revealedVotes?.[participantId];
-    return value === undefined ? '—' : value.toString();
+    return value === undefined ? '—' : this.cardLabel(value);
   }
 
-  isSelected(cardValue: number): boolean {
+  isSelected(cardValue: string): boolean {
     return this.selectedCard === cardValue;
+  }
+
+  cardLabel(cardValue: string): string {
+    return cardValue === 'Joker' ? '✋🗿🤚' : cardValue;
   }
 
   private async handleJoined(response: SessionJoinResponse): Promise<void> {

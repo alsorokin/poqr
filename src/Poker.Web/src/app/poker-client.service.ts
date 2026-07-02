@@ -57,7 +57,7 @@ export class PokerClientService {
     await this.hub?.invoke('StartRound', { sessionId, participantId });
   }
 
-  async castVote(sessionId: string, participantId: string, roundId: string, value: number) {
+  async castVote(sessionId: string, participantId: string, roundId: string, value: string) {
     await this.hub?.invoke('CastVote', { sessionId, participantId, roundId, value });
   }
 

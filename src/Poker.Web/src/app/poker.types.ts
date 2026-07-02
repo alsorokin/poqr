@@ -8,7 +8,7 @@ export interface RoundState {
   roundId: string;
   isRevealed: boolean;
   votedParticipantIds: string[];
-  revealedVotes: Record<string, number> | null;
+  revealedVotes: Record<string, string> | null;
   average: number | null;
 }
 
@@ -16,7 +16,7 @@ export interface RoomState {
   sessionId: string;
   participants: Participant[];
   currentRound: RoundState | null;
-  cardValues: number[];
+  cardValues: string[];
 }
 
 export interface SessionJoinResponse {

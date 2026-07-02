@@ -58,7 +58,7 @@
             *ngFor="let card of roomState.cardValues"
             [class.selected]="isSelected(card)"
             (click)="vote(card)">
-            {{ card }}
+            {{ cardLabel(card) }}
           </button>
         </div>
 

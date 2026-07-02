@@ -4,7 +4,7 @@ namespace Poker.Api.Rooms;
 
 public sealed class RoomStore
 {
-    public static readonly int[] CardValues = [1, 2, 3, 5, 8, 13, 21];
+    public static readonly string[] CardValues = ["1", "2", "3", "5", "8", "13", "21", "Joker"];
 
     private readonly object _gate = new();
     private readonly Dictionary<string, Room> _rooms = new(StringComparer.OrdinalIgnoreCase);
@@ -72,7 +72,7 @@ public sealed class RoomStore
         }
     }
 
-    public RoomStateDto? CastVote(string sessionId, string participantId, string roundId, int value)
+    public RoomStateDto? CastVote(string sessionId, string participantId, string roundId, string value)
     {
         lock (_gate)
         {
@@ -86,7 +86,7 @@ public sealed class RoomStore
                 return null;
             }
 
-            if (!CardValues.Contains(value))
+            if (!CardValues.Contains(value, StringComparer.Ordinal))
             {
                 return null;
             }
@@ -182,13 +182,22 @@ public sealed class RoomStore
         {
             var votes = room.CurrentRound.Votes;
             var revealedVotes = room.CurrentRound.IsRevealed
-                ? new Dictionary<string, int>(votes, StringComparer.Ordinal)
+                ? new Dictionary<string, string>(votes, StringComparer.Ordinal)
                 : null;
 
             double? average = null;
-            if (room.CurrentRound.IsRevealed && votes.Count > 0)
+            if (room.CurrentRound.IsRevealed)
             {
-                average = Math.Round(votes.Values.Average(), 2, MidpointRounding.AwayFromZero);
+                var numericVotes = votes.Values
+                    .Select(value => int.TryParse(value, out var parsed) ? parsed : (int?)null)
+                    .Where(value => value.HasValue)
+                    .Select(value => value!.Value)
+                    .ToList();
+
+                if (numericVotes.Count > 0)
+                {
+                    average = Math.Round(numericVotes.Average(), 2, MidpointRounding.AwayFromZero);
+                }
             }
 
             round = new RoundStateDto(
@@ -231,6 +240,6 @@ public sealed class RoomStore
     {
         public string RoundId { get; } = roundId;
         public bool IsRevealed { get; set; }
-        public Dictionary<string, int> Votes { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, string> Votes { get; } = new(StringComparer.Ordinal);
     }
 }

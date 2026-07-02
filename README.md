@@ -7,7 +7,7 @@ First implementation slice of an anonymous planning poker app.
 - Frontend: Angular SPA (`src/Poker.Web`)
 - Backend: ASP.NET Core + SignalR (`src/Poker.Api`)
 - State: in-memory room store
-- Card deck: Fibonacci capped at 21 (`1, 2, 3, 5, 8, 13, 21`)
+- Card deck: Fibonacci capped at 21 plus `Joker` (`1, 2, 3, 5, 8, 13, 21, Joker`)
 
 ## Implemented behavior
 
