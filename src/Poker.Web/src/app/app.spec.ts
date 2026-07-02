@@ -154,6 +154,35 @@ describe('App', () => {
     expect(pokerClient.castVote).toHaveBeenCalledWith('ABC123', 'p1', 'r1', '3');
   });
 
+  it('clears selected card when a new round starts from state updates', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+
+    app.roomState = buildRoomState({
+      currentRound: {
+        roundId: 'r1',
+        isRevealed: true,
+        votedParticipantIds: ['p1'],
+        revealedVotes: { p1: '3' },
+        average: 3
+      }
+    });
+    app.selectedCard = '3';
+
+    pokerClient.state$.next(buildRoomState({
+      currentRound: {
+        roundId: 'r2',
+        isRevealed: false,
+        votedParticipantIds: [],
+        revealedVotes: null,
+        average: null
+      }
+    }));
+
+    expect(app.selectedCard).toBeNull();
+  });
+
   it('reveal shows card labels and fallback values', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;

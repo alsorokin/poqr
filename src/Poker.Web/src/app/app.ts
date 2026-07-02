@@ -69,6 +69,7 @@ export class App implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.pokerClient.state$.subscribe((state) => {
+        this.syncSelectedCard(state);
         this.updateStartNewVoteLock(state);
         this.roomState = state;
       })
@@ -209,6 +210,14 @@ export class App implements OnInit, OnDestroy {
     this.participantId = null;
     this.roomState = null;
     this.selectedCard = null;
+  }
+
+  private syncSelectedCard(state: RoomState): void {
+    const nextRoundId = state.currentRound?.roundId ?? null;
+
+    if (nextRoundId !== this.currentRoundId) {
+      this.selectedCard = null;
+    }
   }
 
   private updateStartNewVoteLock(state: RoomState): void {
