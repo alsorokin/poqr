@@ -9,7 +9,7 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
     private static readonly Dictionary<string, (string SessionId, string ParticipantId)> ConnectionMap =
         new(StringComparer.Ordinal);
 
-    private static readonly object ConnectionGate = new();
+    private static readonly Lock ConnectionGate = new();
 
     public async Task JoinSession(JoinHubSessionCommand command)
     {

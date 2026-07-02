@@ -6,7 +6,7 @@ public sealed class RoomStore
 {
     public static readonly string[] CardValues = ["1", "2", "3", "5", "8", "13", "21", "Joker"];
 
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly Dictionary<string, Room> _rooms = new(StringComparer.OrdinalIgnoreCase);
 
     public (string SessionId, string ParticipantId, RoomStateDto State) CreateSession(string participantName)
