@@ -1,0 +1,82 @@
+<main class="page">
+  <section class="panel" *ngIf="!sessionId">
+    <h1>Planning Poker</h1>
+    <p class="subtitle">Anonymous sessions, quick voting, reveal anytime.</p>
+
+    <label>
+      Your name
+      <input [(ngModel)]="participantName" placeholder="Team member" />
+    </label>
+
+    <div class="actions-row">
+      <button (click)="createSession()" [disabled]="!participantName.trim()">Create session</button>
+    </div>
+
+    <div class="join-row">
+      <label>
+        Session code
+        <input [(ngModel)]="sessionInput" placeholder="ABC123" />
+      </label>
+      <button (click)="joinSession()" [disabled]="!participantName.trim() || !sessionInput.trim()">
+        Join session
+      </button>
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </section>
+
+  <section class="panel" *ngIf="sessionId && roomState">
+    <header class="room-header">
+      <div>
+        <h2>Session {{ roomState.sessionId }}</h2>
+        <p>Share link: <a [href]="shareLink">{{ shareLink }}</a></p>
+      </div>
+      <button class="ghost" (click)="leave()">Leave</button>
+    </header>
+
+    <div class="room-grid">
+      <article class="card participants">
+        <h3>Participants</h3>
+        <ul>
+          <li *ngFor="let participant of roomState.participants">
+            <span>{{ participant.name }}</span>
+            <span *ngIf="roomState.currentRound && !roomState.currentRound.isRevealed">
+              {{ hasVoted(participant.participantId) ? 'Voted' : 'Waiting' }}
+            </span>
+            <strong *ngIf="roomState.currentRound?.isRevealed">{{ revealedVote(participant.participantId) }}</strong>
+          </li>
+        </ul>
+      </article>
+
+      <article class="card voting" *ngIf="roomState.currentRound as round; else noRound">
+        <h3>Vote</h3>
+        <p *ngIf="!round.isRevealed">Pick your card. You can change it until reveal.</p>
+        <p *ngIf="round.isRevealed">Average: <strong>{{ round.average ?? 'n/a' }}</strong></p>
+
+        <div class="cards" *ngIf="!round.isRevealed">
+          <button
+            *ngFor="let card of roomState.cardValues"
+            [class.selected]="isSelected(card)"
+            (click)="vote(card)">
+            {{ card }}
+          </button>
+        </div>
+
+        <div class="actions-row">
+          <button (click)="reveal()" [disabled]="!canReveal">Reveal cards</button>
+          <button *ngIf="round.isRevealed" (click)="startRound()">Start new vote</button>
+        </div>
+      </article>
+
+      <ng-template #noRound>
+        <article class="card voting">
+          <h3>No active vote</h3>
+          <p>Start a round when your team is ready.</p>
+          <button (click)="startRound()" [disabled]="!canStartRound">Start vote</button>
+        </article>
+      </ng-template>
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </section>
+</main>
