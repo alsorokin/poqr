@@ -13,6 +13,7 @@ import { RoomState, SessionJoinResponse } from './poker.types';
 })
 export class App implements OnInit, OnDestroy {
   private static readonly NEW_ROUND_REVEAL_DELAY_MS = 5000;
+  private static readonly LAST_PARTICIPANT_NAME_STORAGE_KEY = 'poker.participantName';
 
   participantName = '';
   sessionInput = '';
@@ -62,6 +63,8 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.participantName = this.readParticipantName();
+
     const querySession = new URLSearchParams(window.location.search).get('session');
     if (querySession) {
       this.sessionInput = querySession.toUpperCase();
@@ -179,6 +182,7 @@ export class App implements OnInit, OnDestroy {
     this.roomState = response.state;
     this.sessionInput = response.sessionId;
 
+    this.storeParticipantName(this.participantName);
     this.storeParticipantId(response.sessionId, response.participantId);
     this.updateUrl(response.sessionId);
     await this.pokerClient.connect(response.sessionId, response.participantId);
@@ -200,6 +204,14 @@ export class App implements OnInit, OnDestroy {
 
   private readParticipantId(sessionId: string): string | null {
     return sessionStorage.getItem(this.participantStorageKey(sessionId.toUpperCase()));
+  }
+
+  private storeParticipantName(participantName: string): void {
+    localStorage.setItem(App.LAST_PARTICIPANT_NAME_STORAGE_KEY, participantName.trim());
+  }
+
+  private readParticipantName(): string {
+    return localStorage.getItem(App.LAST_PARTICIPANT_NAME_STORAGE_KEY) ?? '';
   }
 
   private resetRoom(): void {

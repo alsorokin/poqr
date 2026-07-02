@@ -57,6 +57,7 @@ describe('App', () => {
     pokerClient.leaveSession.and.resolveTo();
 
     sessionStorage.clear();
+    localStorage.clear();
     window.history.replaceState({}, '', '/');
 
     await TestBed.configureTestingModule({
@@ -86,14 +87,23 @@ describe('App', () => {
     expect(fixture.componentInstance.sessionInput).toBe('ABC123');
   });
 
+  it('restores the last participant name on init', () => {
+    localStorage.setItem('poker.participantName', 'Alice');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.participantName).toBe('Alice');
+  });
+
   it('creates a session and connects to realtime updates', async () => {
     const response = buildJoinResponse();
     pokerClient.createSession.and.returnValue(of(response));
 
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
-    app.participantName = 'Alice';
     fixture.detectChanges();
+    app.participantName = 'Alice';
 
     app.createSession();
     await fixture.whenStable();
@@ -102,6 +112,7 @@ describe('App', () => {
     expect(pokerClient.connect).toHaveBeenCalledWith('ABC123', 'p1');
     expect(app.sessionId).toBe('ABC123');
     expect(app.participantId).toBe('p1');
+    expect(localStorage.getItem('poker.participantName')).toBe('Alice');
     expect(sessionStorage.getItem('poker.participant.ABC123')).toBe('p1');
     expect(new URL(window.location.href).searchParams.get('session')).toBe('ABC123');
   });
