@@ -19,6 +19,7 @@ First implementation slice of an anonymous planning poker app.
 - Reveal at any time (does not require all votes)
 - Show average after reveal
 - Start new vote after reveal (any participant)
+- Preserve session membership across temporary disconnects (for example phone lock/unlock)
 - Remove session when last participant leaves
 
 ## Run locally

@@ -8,24 +8,29 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 {
     private static readonly Dictionary<string, (string SessionId, string ParticipantId)> ConnectionMap =
         new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, HashSet<string>> ParticipantConnections =
+        new(StringComparer.Ordinal);
 
     private static readonly Lock ConnectionGate = new();
 
     public async Task JoinSession(JoinHubSessionCommand command)
     {
-        var state = roomStore.GetState(command.SessionId);
+        await RegisterConnection(command.SessionId, command.ParticipantId);
+
+        var state = roomStore.SetParticipantConnection(command.SessionId, command.ParticipantId, true);
         if (state is null)
         {
             await Clients.Caller.SendAsync("Error", new ErrorEnvelope("Session not found."));
             return;
         }
 
-        await RegisterConnection(command.SessionId, command.ParticipantId);
         await Clients.Group(command.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
     }
 
     public async Task StartRound(StartRoundCommand command)
     {
+        await RegisterConnection(command.SessionId, command.ParticipantId);
+
         var state = roomStore.StartRound(command.SessionId, command.ParticipantId);
         if (state is null)
         {
@@ -33,12 +38,13 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
             return;
         }
 
-        await RegisterConnection(command.SessionId, command.ParticipantId);
         await Clients.Group(command.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
     }
 
     public async Task CastVote(CastVoteCommand command)
     {
+        await RegisterConnection(command.SessionId, command.ParticipantId);
+
         var state = roomStore.CastVote(command.SessionId, command.ParticipantId, command.RoundId, command.Value);
         if (state is null)
         {
@@ -46,12 +52,13 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
             return;
         }
 
-        await RegisterConnection(command.SessionId, command.ParticipantId);
         await Clients.Group(command.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
     }
 
     public async Task RevealRound(RevealRoundCommand command)
     {
+        await RegisterConnection(command.SessionId, command.ParticipantId);
+
         var state = roomStore.RevealRound(command.SessionId, command.ParticipantId, command.RoundId);
         if (state is null)
         {
@@ -59,18 +66,19 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
             return;
         }
 
-        await RegisterConnection(command.SessionId, command.ParticipantId);
         await Clients.Group(command.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
     }
 
     public async Task LeaveSession(LeaveSessionCommand command)
     {
+        RemoveParticipantConnections(command.SessionId, command.ParticipantId);
         await HandleLeave(command.SessionId, command.ParticipantId);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         (string SessionId, string ParticipantId)? found = null;
+        var becameDisconnected = false;
 
         lock (ConnectionGate)
         {
@@ -78,12 +86,27 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
             {
                 found = info;
                 ConnectionMap.Remove(Context.ConnectionId);
+
+                var key = ParticipantKey(info.SessionId, info.ParticipantId);
+                if (ParticipantConnections.TryGetValue(key, out var connections))
+                {
+                    connections.Remove(Context.ConnectionId);
+                    if (connections.Count == 0)
+                    {
+                        ParticipantConnections.Remove(key);
+                        becameDisconnected = true;
+                    }
+                }
             }
         }
 
-        if (found is not null)
+        if (found is not null && becameDisconnected)
         {
-            await HandleLeave(found.Value.SessionId, found.Value.ParticipantId);
+            var state = roomStore.SetParticipantConnection(found.Value.SessionId, found.Value.ParticipantId, false);
+            if (state is not null)
+            {
+                await Clients.Group(found.Value.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
+            }
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -95,7 +118,50 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
         lock (ConnectionGate)
         {
+            if (ConnectionMap.TryGetValue(Context.ConnectionId, out var existingInfo))
+            {
+                var existingKey = ParticipantKey(existingInfo.SessionId, existingInfo.ParticipantId);
+                if (ParticipantConnections.TryGetValue(existingKey, out var existingConnections))
+                {
+                    existingConnections.Remove(Context.ConnectionId);
+                    if (existingConnections.Count == 0)
+                    {
+                        ParticipantConnections.Remove(existingKey);
+                    }
+                }
+            }
+
             ConnectionMap[Context.ConnectionId] = (sessionId, participantId);
+            var key = ParticipantKey(sessionId, participantId);
+            if (!ParticipantConnections.TryGetValue(key, out var connections))
+            {
+                connections = new HashSet<string>(StringComparer.Ordinal);
+                ParticipantConnections[key] = connections;
+            }
+
+            connections.Add(Context.ConnectionId);
+        }
+    }
+
+    private static string ParticipantKey(string sessionId, string participantId)
+        => $"{sessionId.ToUpperInvariant()}:{participantId}";
+
+    private static void RemoveParticipantConnections(string sessionId, string participantId)
+    {
+        lock (ConnectionGate)
+        {
+            var key = ParticipantKey(sessionId, participantId);
+            if (!ParticipantConnections.TryGetValue(key, out var connections))
+            {
+                return;
+            }
+
+            foreach (var connectionId in connections)
+            {
+                ConnectionMap.Remove(connectionId);
+            }
+
+            ParticipantConnections.Remove(key);
         }
     }
 

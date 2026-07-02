@@ -138,6 +138,26 @@ public sealed class RoomStore
         }
     }
 
+    public RoomStateDto? SetParticipantConnection(string sessionId, string participantId, bool isConnected)
+    {
+        lock (_gate)
+        {
+            if (!_rooms.TryGetValue(sessionId, out var room))
+            {
+                return null;
+            }
+
+            if (!room.Participants.TryGetValue(participantId, out var participant))
+            {
+                return null;
+            }
+
+            participant.IsConnected = isConnected;
+            room.Touch();
+            return BuildState(room);
+        }
+    }
+
     private static string GenerateSessionId()
     {
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

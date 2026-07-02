@@ -8,6 +8,8 @@ import { ErrorEnvelope, RoomState, SessionJoinResponse } from './poker.types';
 export class PokerClientService {
   private readonly apiBase: string;
   private hub: HubConnection | null = null;
+  private activeSessionId: string | null = null;
+  private activeParticipantId: string | null = null;
 
   readonly state$ = new Subject<RoomState>();
   readonly error$ = new Subject<string>();
@@ -32,8 +34,16 @@ export class PokerClientService {
   }
 
   async connect(sessionId: string, participantId: string): Promise<void> {
+    this.activeSessionId = sessionId;
+    this.activeParticipantId = participantId;
+
     if (!this.hub) {
-      this.hub = new HubConnectionBuilder().withUrl(`${this.apiBase}/hubs/poker`).withAutomaticReconnect().build();
+      this.hub = new HubConnectionBuilder()
+        .withUrl(`${this.apiBase}/hubs/poker`)
+        .withAutomaticReconnect({
+          nextRetryDelayInMilliseconds: (context) => Math.min(30000, 1000 * Math.pow(2, context.previousRetryCount))
+        })
+        .build();
 
       this.hub.on('RoomStateUpdated', (envelope: { state: RoomState }) => {
         this.state$.next(envelope.state);
@@ -47,10 +57,18 @@ export class PokerClientService {
         this.sessionClosed$.next(envelope.message);
       });
 
+      this.hub.onreconnected(async () => {
+        try {
+          await this.joinHubSession();
+        } catch {
+          this.error$.next('Reconnected, but failed to rejoin the session.');
+        }
+      });
+
       await this.hub.start();
     }
 
-    await this.hub.invoke('JoinSession', { sessionId, participantId });
+    await this.joinHubSession();
   }
 
   async startRound(sessionId: string, participantId: string) {
@@ -67,7 +85,20 @@ export class PokerClientService {
 
   async leaveSession(sessionId: string, participantId: string) {
     await this.hub?.invoke('LeaveSession', { sessionId, participantId });
+    this.activeSessionId = null;
+    this.activeParticipantId = null;
     await this.hub?.stop();
     this.hub = null;
+  }
+
+  private async joinHubSession(): Promise<void> {
+    if (!this.hub || !this.activeSessionId || !this.activeParticipantId) {
+      return;
+    }
+
+    await this.hub.invoke('JoinSession', {
+      sessionId: this.activeSessionId,
+      participantId: this.activeParticipantId
+    });
   }
 }

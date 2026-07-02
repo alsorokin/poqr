@@ -126,4 +126,32 @@ public sealed class RoomStoreTests
         Assert.Null(afterHostLeaves);
         Assert.Null(store.GetState(created.SessionId));
     }
+
+    [Fact]
+    public void SetParticipantConnection_TogglesConnectionStatus_WithoutRemovingParticipant()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+
+        var disconnected = store.SetParticipantConnection(created.SessionId, created.ParticipantId, false);
+
+        Assert.NotNull(disconnected);
+        Assert.Single(disconnected!.Participants);
+        Assert.False(disconnected.Participants.Single().IsConnected);
+
+        var reconnected = store.SetParticipantConnection(created.SessionId, created.ParticipantId, true);
+
+        Assert.NotNull(reconnected);
+        Assert.True(reconnected!.Participants.Single().IsConnected);
+    }
+
+    [Fact]
+    public void SetParticipantConnection_ReturnsNull_WhenParticipantOrSessionMissing()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+
+        Assert.Null(store.SetParticipantConnection("MISSING", created.ParticipantId, false));
+        Assert.Null(store.SetParticipantConnection(created.SessionId, "missing-participant", false));
+    }
 }
