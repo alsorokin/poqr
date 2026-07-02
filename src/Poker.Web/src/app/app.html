@@ -64,7 +64,7 @@
 
         <div class="actions-row">
           <button (click)="reveal()" [disabled]="!canReveal">Reveal cards</button>
-          <button *ngIf="round.isRevealed" (click)="startRound()">Start new vote</button>
+          <button *ngIf="round.isRevealed" (click)="startRound()" [disabled]="!canStartNewVote">Start new vote</button>
         </div>
       </article>
 

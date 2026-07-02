@@ -12,6 +12,8 @@ import { RoomState, SessionJoinResponse } from './poker.types';
   styleUrl: './app.css'
 })
 export class App implements OnInit, OnDestroy {
+  private static readonly NEW_ROUND_REVEAL_DELAY_MS = 5000;
+
   participantName = '';
   sessionInput = '';
   selectedCard: string | null = null;
@@ -22,6 +24,10 @@ export class App implements OnInit, OnDestroy {
   error = '';
 
   private subscriptions: Subscription[] = [];
+  private isStartNewVoteLocked = false;
+  private startNewVoteLockTimeout: ReturnType<typeof setTimeout> | null = null;
+  private previousRoundId: string | null = null;
+  private previousRoundRevealed = false;
 
   constructor(private readonly pokerClient: PokerClientService) {}
 
@@ -49,6 +55,12 @@ export class App implements OnInit, OnDestroy {
     return !!this.currentRoundId && this.roomState?.currentRound?.isRevealed === false;
   }
 
+  get canStartNewVote(): boolean {
+    return !!this.currentRoundId
+      && this.roomState?.currentRound?.isRevealed === true
+      && !this.isStartNewVoteLocked;
+  }
+
   ngOnInit(): void {
     const querySession = new URLSearchParams(window.location.search).get('session');
     if (querySession) {
@@ -57,6 +69,7 @@ export class App implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.pokerClient.state$.subscribe((state) => {
+        this.updateStartNewVoteLock(state);
         this.roomState = state;
       })
     );
@@ -76,6 +89,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearStartNewVoteLock();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
@@ -103,6 +117,10 @@ export class App implements OnInit, OnDestroy {
 
   async startRound(): Promise<void> {
     if (!this.sessionId || !this.participantId) {
+      return;
+    }
+
+    if (this.roomState?.currentRound?.isRevealed && this.isStartNewVoteLocked) {
       return;
     }
 
@@ -184,9 +202,49 @@ export class App implements OnInit, OnDestroy {
   }
 
   private resetRoom(): void {
+    this.clearStartNewVoteLock();
+    this.previousRoundId = null;
+    this.previousRoundRevealed = false;
     this.sessionId = null;
     this.participantId = null;
     this.roomState = null;
     this.selectedCard = null;
+  }
+
+  private updateStartNewVoteLock(state: RoomState): void {
+    const roundId = state.currentRound?.roundId ?? null;
+    const isRevealed = state.currentRound?.isRevealed === true;
+
+    const hasJustRevealed = !!roundId
+      && isRevealed
+      && (roundId !== this.previousRoundId || !this.previousRoundRevealed);
+
+    if (hasJustRevealed) {
+      this.isStartNewVoteLocked = true;
+      this.clearStartNewVoteLockTimeout();
+      this.startNewVoteLockTimeout = setTimeout(() => {
+        this.isStartNewVoteLocked = false;
+        this.startNewVoteLockTimeout = null;
+      }, App.NEW_ROUND_REVEAL_DELAY_MS);
+    }
+
+    if (!isRevealed) {
+      this.clearStartNewVoteLock();
+    }
+
+    this.previousRoundId = roundId;
+    this.previousRoundRevealed = isRevealed;
+  }
+
+  private clearStartNewVoteLock(): void {
+    this.clearStartNewVoteLockTimeout();
+    this.isStartNewVoteLocked = false;
+  }
+
+  private clearStartNewVoteLockTimeout(): void {
+    if (this.startNewVoteLockTimeout !== null) {
+      clearTimeout(this.startNewVoteLockTimeout);
+      this.startNewVoteLockTimeout = null;
+    }
   }
 }

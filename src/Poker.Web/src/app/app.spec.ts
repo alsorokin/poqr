@@ -204,4 +204,51 @@ describe('App', () => {
     expect(app.participantId).toBeNull();
     expect(app.roomState).toBeNull();
   });
+
+  it('locks starting a new vote for 5 seconds right after reveal', async () => {
+    jasmine.clock().install();
+
+    try {
+      const fixture = TestBed.createComponent(App);
+      const app = fixture.componentInstance;
+      fixture.detectChanges();
+
+      app.sessionId = 'ABC123';
+      app.participantId = 'p1';
+
+      pokerClient.state$.next(buildRoomState({
+        currentRound: {
+          roundId: 'r1',
+          isRevealed: false,
+          votedParticipantIds: ['p1'],
+          revealedVotes: null,
+          average: null
+        }
+      }));
+
+      pokerClient.state$.next(buildRoomState({
+        currentRound: {
+          roundId: 'r1',
+          isRevealed: true,
+          votedParticipantIds: ['p1'],
+          revealedVotes: { p1: '3' },
+          average: 3
+        }
+      }));
+
+      expect(app.canStartNewVote).toBeFalse();
+
+      await app.startRound();
+      expect(pokerClient.startRound).not.toHaveBeenCalled();
+
+      jasmine.clock().tick(5000);
+
+      expect(app.canStartNewVote).toBeTrue();
+
+      await app.startRound();
+      expect(pokerClient.startRound).toHaveBeenCalledWith('ABC123', 'p1');
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
 });
