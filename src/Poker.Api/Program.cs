@@ -4,6 +4,7 @@ using Poker.Api.Rooms;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<RoomStore>();
+builder.Services.AddHostedService<DisconnectedParticipantCleanupService>();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddCors(options =>

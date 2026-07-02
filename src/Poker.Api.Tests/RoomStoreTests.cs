@@ -154,4 +154,62 @@ public sealed class RoomStoreTests
         Assert.Null(store.SetParticipantConnection("MISSING", created.ParticipantId, false));
         Assert.Null(store.SetParticipantConnection(created.SessionId, "missing-participant", false));
     }
+
+    [Fact]
+    public void PruneExpiredDisconnectedParticipants_RemovesParticipantAfterGraceWindow()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+        var second = store.JoinSession(created.SessionId, "Bob", null);
+
+        Assert.NotNull(second);
+        var secondParticipant = second!.Value;
+
+        var now = DateTime.UtcNow;
+        store.SetParticipantConnection(created.SessionId, secondParticipant.ParticipantId, false, now.AddMinutes(-6));
+
+        var updates = store.PruneExpiredDisconnectedParticipants(now);
+
+        Assert.Single(updates);
+        Assert.Equal(created.SessionId, updates[0].SessionId);
+        var stateAfterPrune = updates[0].State;
+        Assert.NotNull(stateAfterPrune);
+        Assert.Single(stateAfterPrune!.Participants);
+        Assert.Equal(created.ParticipantId, stateAfterPrune.Participants.Single().ParticipantId);
+    }
+
+    [Fact]
+    public void PruneExpiredDisconnectedParticipants_KeepsParticipantWithinGraceWindow()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+
+        var now = DateTime.UtcNow;
+        store.SetParticipantConnection(created.SessionId, created.ParticipantId, false, now.AddMinutes(-4));
+
+        var updates = store.PruneExpiredDisconnectedParticipants(now);
+
+        Assert.Empty(updates);
+        var state = store.GetState(created.SessionId);
+        Assert.NotNull(state);
+        Assert.Single(state!.Participants);
+        Assert.False(state.Participants.Single().IsConnected);
+    }
+
+    [Fact]
+    public void PruneExpiredDisconnectedParticipants_ClosesSessionWhenLastParticipantExpires()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+
+        var now = DateTime.UtcNow;
+        store.SetParticipantConnection(created.SessionId, created.ParticipantId, false, now.AddMinutes(-6));
+
+        var updates = store.PruneExpiredDisconnectedParticipants(now);
+
+        Assert.Single(updates);
+        Assert.Equal(created.SessionId, updates[0].SessionId);
+        Assert.Null(updates[0].State);
+        Assert.Null(store.GetState(created.SessionId));
+    }
 }

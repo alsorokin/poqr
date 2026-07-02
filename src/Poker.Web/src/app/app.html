@@ -38,8 +38,12 @@
       <article class="card participants">
         <h3>Participants</h3>
         <ul>
-          <li *ngFor="let participant of roomState.participants">
-            <span>{{ participant.name }}</span>
+          <li *ngFor="let participant of roomState.participants" [class.participant-disconnected]="!participant.isConnected">
+            <span class="participant-name">
+              <span>{{ participant.name }}</span>
+              <span class="status connected" *ngIf="participant.isConnected">Online</span>
+              <span class="status disconnected" *ngIf="!participant.isConnected">Disconnected</span>
+            </span>
             <span *ngIf="roomState.currentRound && !roomState.currentRound.isRevealed">
               {{ hasVoted(participant.participantId) ? 'Voted' : 'Waiting' }}
             </span>

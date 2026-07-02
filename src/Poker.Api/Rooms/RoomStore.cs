@@ -5,9 +5,12 @@ namespace Poker.Api.Rooms;
 public sealed class RoomStore
 {
     public static readonly string[] CardValues = ["1", "2", "3", "5", "8", "13", "21", "Joker"];
+    public static readonly TimeSpan DisconnectedParticipantGracePeriod = TimeSpan.FromMinutes(5);
 
     private readonly Lock _gate = new();
     private readonly Dictionary<string, Room> _rooms = new(StringComparer.OrdinalIgnoreCase);
+
+    public sealed record CleanupResult(string SessionId, RoomStateDto? State);
 
     public (string SessionId, string ParticipantId, RoomStateDto State) CreateSession(string participantName)
     {
@@ -138,12 +141,19 @@ public sealed class RoomStore
         }
     }
 
-    public RoomStateDto? SetParticipantConnection(string sessionId, string participantId, bool isConnected)
+    public RoomStateDto? SetParticipantConnection(string sessionId, string participantId, bool isConnected, DateTime? changedAtUtc = null)
     {
         lock (_gate)
         {
             if (!_rooms.TryGetValue(sessionId, out var room))
             {
+                return null;
+            }
+
+            PruneExpiredDisconnectedParticipants(room, changedAtUtc ?? DateTime.UtcNow);
+            if (room.Participants.Count == 0)
+            {
+                _rooms.Remove(sessionId);
                 return null;
             }
 
@@ -153,9 +163,41 @@ public sealed class RoomStore
             }
 
             participant.IsConnected = isConnected;
+            participant.DisconnectedSinceUtc = isConnected ? null : (changedAtUtc ?? DateTime.UtcNow);
             room.Touch();
             return BuildState(room);
         }
+    }
+
+    public IReadOnlyList<CleanupResult> PruneExpiredDisconnectedParticipants(DateTime? nowUtc = null)
+    {
+        var updates = new List<CleanupResult>();
+
+        lock (_gate)
+        {
+            var now = nowUtc ?? DateTime.UtcNow;
+            foreach (var sessionId in _rooms.Keys.ToList())
+            {
+                var room = _rooms[sessionId];
+                var removedAny = PruneExpiredDisconnectedParticipants(room, now);
+                if (!removedAny)
+                {
+                    continue;
+                }
+
+                if (room.Participants.Count == 0)
+                {
+                    _rooms.Remove(sessionId);
+                    updates.Add(new CleanupResult(sessionId, null));
+                    continue;
+                }
+
+                room.Touch();
+                updates.Add(new CleanupResult(sessionId, BuildState(room)));
+            }
+        }
+
+        return updates;
     }
 
     private static string GenerateSessionId()
@@ -192,6 +234,30 @@ public sealed class RoomStore
     {
         var value = string.IsNullOrWhiteSpace(input) ? "Anonymous" : input.Trim();
         return value.Length > 30 ? value[..30] : value;
+    }
+
+    private static bool PruneExpiredDisconnectedParticipants(Room room, DateTime nowUtc)
+    {
+        var staleParticipantIds = room.Participants.Values
+            .Where(participant =>
+                !participant.IsConnected
+                && participant.DisconnectedSinceUtc.HasValue
+                && nowUtc - participant.DisconnectedSinceUtc.Value >= DisconnectedParticipantGracePeriod)
+            .Select(participant => participant.ParticipantId)
+            .ToList();
+
+        if (staleParticipantIds.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var participantId in staleParticipantIds)
+        {
+            room.Participants.Remove(participantId);
+            room.CurrentRound?.Votes.Remove(participantId);
+        }
+
+        return true;
     }
 
     private static RoomStateDto BuildState(Room room)
@@ -254,6 +320,7 @@ public sealed class RoomStore
         public string Name { get; set; } = name;
         public DateTime JoinedAtUtc { get; } = DateTime.UtcNow;
         public bool IsConnected { get; set; } = true;
+        public DateTime? DisconnectedSinceUtc { get; set; }
     }
 
     private sealed class Round(string roundId)
