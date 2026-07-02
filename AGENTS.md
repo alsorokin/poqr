@@ -74,6 +74,13 @@ Test runner note:
 - Avoid packaging nested publish folders repeatedly.
   - Prefer publishing to a clean output directory and zipping that directory once.
   - Clean temporary artifacts after deploy when possible.
+- Deployment flow:
+  - `cd src/Poker.Web && npm run build`
+  - `dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poker-publish`
+  - Remove `/tmp/poker-publish/publish` and `/tmp/poker-publish/out` if they exist.
+  - Copy `src/Poker.Web/dist/poker-web/browser/.` into `/tmp/poker-publish/wwwroot/`.
+  - Zip `/tmp/poker-publish` once and deploy with `az webapp deploy --type zip`.
+  - Start the app after deploy with `az webapp start`.
 
 ## Known constraints
 
