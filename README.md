@@ -51,7 +51,24 @@ dotnet build Poker.sln
 cd src/Poker.Web && npm run build
 ```
 
+## Run tests
+
+Frontend unit tests use Karma with Puppeteer-managed headless Chromium, so a system Chrome install is not required.
+
+```bash
+cd src/Poker.Web
+npm run test
+```
+
+Optional variants:
+
+```bash
+npm run test:watch
+npm run test:ci
+```
+
 ## Notes
 
 - Data is intentionally ephemeral for v1 (server restart clears sessions).
 - This is single-instance in-memory state, suitable for the initial 10+ user target.
+- Angular CLI warns when using odd-numbered Node versions (for example v25); prefer an LTS Node version for development and CI.

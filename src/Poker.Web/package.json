@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "node ./scripts/run-karma-tests.mjs",
+    "test:watch": "node ./scripts/run-karma-tests.mjs --watch",
+    "test:ci": "node ./scripts/run-karma-tests.mjs --watch=false --browsers=ChromeHeadless"
   },
   "prettier": {
     "printWidth": 100,
@@ -44,6 +46,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "puppeteer": "^24.12.1",
     "typescript": "~5.9.2"
   }
 }

@@ -28,6 +28,9 @@ Purpose: fast onboarding for coding agents working in this repository.
 - Build checks:
   - `dotnet build Poker.sln`
   - `cd src/Poker.Web && npm run build`
+- Frontend tests (Karma + Puppeteer headless Chromium):
+  - `cd src/Poker.Web && npm run test`
+  - `cd src/Poker.Web && npm run test:watch`
 
 ## Agent workflow expectations
 
@@ -49,7 +52,12 @@ Purpose: fast onboarding for coding agents working in this repository.
 
 - Run backend build: `dotnet build Poker.sln`
 - Run frontend build: `cd src/Poker.Web && npm run build`
+- Run frontend tests when UI/service logic changed: `cd src/Poker.Web && npm run test`
 - For realtime/session behavior changes, manually verify with two browser tabs.
+
+Test runner note:
+
+- Frontend tests no longer require a system Chrome binary; `npm run test` sets `CHROME_BIN` to Puppeteer's bundled Chromium.
 
 ## Deployment notes (Azure App Service)
 
