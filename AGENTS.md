@@ -28,6 +28,8 @@ Purpose: fast onboarding for coding agents working in this repository.
 - Build checks:
   - `dotnet build Poker.sln`
   - `cd src/Poker.Web && npm run build`
+- Backend tests (xUnit):
+  - `cd src/Poker.Api.Tests && dotnet test`
 - Frontend tests (Karma + Puppeteer headless Chromium):
   - `cd src/Poker.Web && npm run test`
   - `cd src/Poker.Web && npm run test:watch`
@@ -51,9 +53,16 @@ Purpose: fast onboarding for coding agents working in this repository.
 ## Testing/validation before handoff
 
 - Run backend build: `dotnet build Poker.sln`
+- Run backend tests when backend behavior changes: `cd src/Poker.Api.Tests && dotnet test`
 - Run frontend build: `cd src/Poker.Web && npm run build`
 - Run frontend tests when UI/service logic changed: `cd src/Poker.Web && npm run test`
 - For realtime/session behavior changes, manually verify with two browser tabs.
+
+## Documentation sync rule
+
+- When adding/changing commands, tests, scripts, project layout, or workflow expectations, update `README.md` in the same change.
+- If the change affects agent workflow/runbooks, also update `AGENTS.md` in the same change.
+- Do not consider a task complete until documentation reflects the new behavior.
 
 Test runner note:
 

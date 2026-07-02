@@ -55,9 +55,16 @@ cd src/Poker.Web && npm run build
 
 Frontend unit tests use Karma with Puppeteer-managed headless Chromium, so a system Chrome install is not required.
 
+Backend unit tests use xUnit and cover core room/session lifecycle behavior in `RoomStore`.
+
 ```bash
 cd src/Poker.Web
 npm run test
+```
+
+```bash
+cd src/Poker.Api.Tests
+dotnet test
 ```
 
 Optional variants:
