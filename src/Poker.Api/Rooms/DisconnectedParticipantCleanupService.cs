@@ -13,6 +13,10 @@ public sealed class DisconnectedParticipantCleanupService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation(
+            "Disconnected participant cleanup service started with interval {CleanupInterval}.",
+            CleanupInterval);
+
         using var timer = new PeriodicTimer(CleanupInterval);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -26,6 +30,13 @@ public sealed class DisconnectedParticipantCleanupService(
                 }
 
                 var updates = roomStore.PruneExpiredDisconnectedParticipants();
+                if (updates.Count > 0)
+                {
+                    logger.LogInformation(
+                        "Cleanup cycle produced {UpdateCount} session updates.",
+                        updates.Count);
+                }
+
                 foreach (var update in updates)
                 {
                     if (update.State is not null)
@@ -41,6 +52,7 @@ public sealed class DisconnectedParticipantCleanupService(
             }
             catch (OperationCanceledException)
             {
+                logger.LogInformation("Disconnected participant cleanup service is stopping.");
                 break;
             }
             catch (Exception ex)

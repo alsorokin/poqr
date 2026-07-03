@@ -4,7 +4,7 @@ using Poker.Api.Rooms;
 
 namespace Poker.Api.Hubs;
 
-public sealed class PokerHub(RoomStore roomStore) : Hub
+public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hub
 {
     private static readonly Dictionary<string, (string SessionId, string ParticipantId)> ConnectionMap =
         new(StringComparer.Ordinal);
@@ -15,11 +15,21 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
     public async Task JoinSession(JoinHubSessionCommand command)
     {
+        logger.LogInformation(
+            "Hub JoinSession requested for session {SessionId} by participant {ParticipantId} (connection {ConnectionId}).",
+            command.SessionId,
+            command.ParticipantId,
+            Context.ConnectionId);
+
         await RegisterConnection(command.SessionId, command.ParticipantId);
 
         var state = roomStore.SetParticipantConnection(command.SessionId, command.ParticipantId, true);
         if (state is null)
         {
+            logger.LogWarning(
+                "Hub JoinSession failed for session {SessionId} by participant {ParticipantId}: session or participant not found.",
+                command.SessionId,
+                command.ParticipantId);
             await Clients.Caller.SendAsync("Error", new ErrorEnvelope("Session not found."));
             return;
         }
@@ -29,11 +39,20 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
     public async Task StartRound(StartRoundCommand command)
     {
+        logger.LogInformation(
+            "Hub StartRound requested for session {SessionId} by participant {ParticipantId}.",
+            command.SessionId,
+            command.ParticipantId);
+
         await RegisterConnection(command.SessionId, command.ParticipantId);
 
         var state = roomStore.StartRound(command.SessionId, command.ParticipantId);
         if (state is null)
         {
+            logger.LogWarning(
+                "Hub StartRound failed for session {SessionId} by participant {ParticipantId}.",
+                command.SessionId,
+                command.ParticipantId);
             await Clients.Caller.SendAsync("Error", new ErrorEnvelope("Unable to start a round."));
             return;
         }
@@ -43,11 +62,22 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
     public async Task CastVote(CastVoteCommand command)
     {
+        logger.LogInformation(
+            "Hub CastVote requested for session {SessionId}, round {RoundId}, participant {ParticipantId}.",
+            command.SessionId,
+            command.RoundId,
+            command.ParticipantId);
+
         await RegisterConnection(command.SessionId, command.ParticipantId);
 
         var state = roomStore.CastVote(command.SessionId, command.ParticipantId, command.RoundId, command.Value);
         if (state is null)
         {
+            logger.LogWarning(
+                "Hub CastVote failed for session {SessionId}, round {RoundId}, participant {ParticipantId}.",
+                command.SessionId,
+                command.RoundId,
+                command.ParticipantId);
             await Clients.Caller.SendAsync("Error", new ErrorEnvelope("Unable to cast vote."));
             return;
         }
@@ -57,11 +87,22 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
     public async Task RevealRound(RevealRoundCommand command)
     {
+        logger.LogInformation(
+            "Hub RevealRound requested for session {SessionId}, round {RoundId}, participant {ParticipantId}.",
+            command.SessionId,
+            command.RoundId,
+            command.ParticipantId);
+
         await RegisterConnection(command.SessionId, command.ParticipantId);
 
         var state = roomStore.RevealRound(command.SessionId, command.ParticipantId, command.RoundId);
         if (state is null)
         {
+            logger.LogWarning(
+                "Hub RevealRound failed for session {SessionId}, round {RoundId}, participant {ParticipantId}.",
+                command.SessionId,
+                command.RoundId,
+                command.ParticipantId);
             await Clients.Caller.SendAsync("Error", new ErrorEnvelope("Unable to reveal this round."));
             return;
         }
@@ -71,6 +112,11 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
     public async Task LeaveSession(LeaveSessionCommand command)
     {
+        logger.LogInformation(
+            "Hub LeaveSession requested for session {SessionId} by participant {ParticipantId}.",
+            command.SessionId,
+            command.ParticipantId);
+
         RemoveParticipantConnections(command.SessionId, command.ParticipantId);
         await HandleLeave(command.SessionId, command.ParticipantId);
     }
@@ -102,11 +148,25 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
         if (found is not null && becameDisconnected)
         {
+            logger.LogInformation(
+                "Connection {ConnectionId} disconnected; marking participant {ParticipantId} as disconnected in session {SessionId}.",
+                Context.ConnectionId,
+                found.Value.ParticipantId,
+                found.Value.SessionId);
+
             var state = roomStore.SetParticipantConnection(found.Value.SessionId, found.Value.ParticipantId, false);
             if (state is not null)
             {
                 await Clients.Group(found.Value.SessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
             }
+        }
+
+        if (exception is not null)
+        {
+            logger.LogWarning(
+                exception,
+                "Connection {ConnectionId} disconnected with an exception.",
+                Context.ConnectionId);
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -141,6 +201,12 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
 
             connections.Add(Context.ConnectionId);
         }
+
+        logger.LogDebug(
+            "Registered connection {ConnectionId} for session {SessionId}, participant {ParticipantId}.",
+            Context.ConnectionId,
+            sessionId,
+            participantId);
     }
 
     private static string ParticipantKey(string sessionId, string participantId)
@@ -170,10 +236,18 @@ public sealed class PokerHub(RoomStore roomStore) : Hub
         var state = roomStore.LeaveSession(sessionId, participantId);
         if (state is not null)
         {
+            logger.LogInformation(
+                "Participant {ParticipantId} left session {SessionId}; broadcasting updated room state.",
+                participantId,
+                sessionId);
             await Clients.Group(sessionId).SendAsync("RoomStateUpdated", new RoomStateEnvelope(state));
             return;
         }
 
+        logger.LogInformation(
+            "Session {SessionId} closed after participant {ParticipantId} left; broadcasting SessionClosed.",
+            sessionId,
+            participantId);
         await Clients.Group(sessionId).SendAsync("SessionClosed", new ErrorEnvelope("Session ended."));
     }
 }

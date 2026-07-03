@@ -1,7 +1,13 @@
 using Poker.Api.Hubs;
 using Poker.Api.Rooms;
+using Microsoft.Extensions.Logging.ApplicationInsights;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplicationInsightsTelemetry();
+
+builder.Logging.AddApplicationInsights();
+builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information);
 
 builder.Services.AddSingleton<RoomStore>();
 builder.Services.AddHostedService<DisconnectedParticipantCleanupService>();
