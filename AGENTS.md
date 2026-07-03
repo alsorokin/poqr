@@ -70,10 +70,11 @@ Test runner note:
 
 ## Deployment notes (Azure App Service)
 
-- Previous deploy target used: `pokerweu-2607021311-apiw-4773` in resource group `pokerweu-2607021311-rg`.
+- Current GitHub Actions deploy target: `poqr` in resource group `pokerweu-2607021311-rg`.
 - Avoid packaging nested publish folders repeatedly.
   - Prefer publishing to a clean output directory and zipping that directory once.
   - Clean temporary artifacts after deploy when possible.
+- Keep the CI package shape aligned with manual deploys: build Angular first, publish the API to a clean directory, then copy `src/Poker.Web/dist/poker-web/browser/.` into the published `wwwroot/` before deploy.
 - Deployment flow:
   - `cd src/Poker.Web && npm run build`
   - `dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poker-publish`

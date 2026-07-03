@@ -54,6 +54,24 @@ dotnet build Poker.sln
 cd src/Poker.Web && npm run build
 ```
 
+## GitHub Actions deploy package
+
+The GitHub Actions workflow for `poqr` builds the frontend and backend separately, then deploys a single combined App Service package:
+
+```bash
+cd src/Poker.Web
+npm ci
+npm run build
+
+cd /home/snay/src/poker
+dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poqr-publish
+rm -rf /tmp/poqr-publish/publish /tmp/poqr-publish/out
+rm -rf /tmp/poqr-publish/wwwroot/*
+cp -r src/Poker.Web/dist/poker-web/browser/. /tmp/poqr-publish/wwwroot/
+```
+
+That final `/tmp/poqr-publish` directory is what gets uploaded and deployed by the workflow.
+
 ## Deploy to Azure App Service
 
 The app is deployed as a single zip package to Azure App Service. Use a clean publish directory so the package does not contain nested `publish/` or `out/` folders.
