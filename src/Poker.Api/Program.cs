@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 		}
 		else
 		{
-			policy.WithOrigins("https://pokerweu-2607021311-apiw-4773.azurewebsites.net", "https://pokerweu-2607021311-apiw-4773.azurewebsites.net:443");
+			policy.WithOrigins("https://poqr.azurewebsites.net");
 		}
 		policy
 			.AllowAnyHeader()
