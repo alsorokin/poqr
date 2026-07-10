@@ -74,7 +74,7 @@ Test runner note:
 - Infrastructure is defined in `infra/` as Bicep (IaC). All resource changes must go through Bicep — do not edit Azure resources manually.
 - Current deploy target: App Service `poqr` in resource group `poqr-rg` (West Europe).
 - GitHub Actions workflow runs three jobs: `infra` (Bicep deploy) and `build` in parallel, then `deploy` once both finish.
-- Required GitHub secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` (OIDC; service principal needs Contributor at subscription scope).
+- Required GitHub secrets (auto-generated names, aliased in workflow `env:` to clean names): `AZUREAPPSERVICE_CLIENTID_...`, `AZUREAPPSERVICE_TENANTID_...`, `AZUREAPPSERVICE_SUBSCRIPTIONID_...` (OIDC; service principal needs Contributor at subscription scope).
 - Avoid packaging nested publish folders repeatedly.
   - Prefer publishing to a clean output directory and zipping that directory once.
   - Clean temporary artifacts after deploy when possible.

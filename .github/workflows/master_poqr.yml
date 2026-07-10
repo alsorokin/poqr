@@ -6,6 +6,14 @@ on:
       - master
   workflow_dispatch:
 
+# Azure OIDC credentials — rename these secrets to AZURE_CLIENT_ID /
+# AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID and update the values below
+# once the old auto-generated secrets have been replaced.
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7785DF056FD348D493EA0655CDED4CBB }}
+  AZURE_TENANT_ID: ${{ secrets.AZUREAPPSERVICE_TENANTID_8A60F6B7A67D4012A87E345BF23C25BB }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B813E682DE5744C394E3C037F984DE23 }}
+
 jobs:
   # Deploys Bicep infrastructure (idempotent — safe to run on every push).
   # Runs in parallel with the build job.

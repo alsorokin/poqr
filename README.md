@@ -88,13 +88,15 @@ az deployment sub create \
 
 ### GitHub Actions secrets required
 
-The workflow uses OIDC (federated identity). Set these three secrets in the repository:
+The workflow uses OIDC (federated identity). The following secrets are currently configured (auto-generated names from the original App Service deploy wizard):
 
 | Secret | Value |
 |---|---|
-| `AZURE_CLIENT_ID` | App registration client ID |
-| `AZURE_TENANT_ID` | Azure AD tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Target subscription ID |
+| `AZUREAPPSERVICE_CLIENTID_7785DF056FD348D493EA0655CDED4CBB` | App registration client ID |
+| `AZUREAPPSERVICE_TENANTID_8A60F6B7A67D4012A87E345BF23C25BB` | Azure AD tenant ID |
+| `AZUREAPPSERVICE_SUBSCRIPTIONID_B813E682DE5744C394E3C037F984DE23` | Target subscription ID |
+
+They are aliased in the workflow `env:` block to `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`. To use cleaner names, add new secrets with those names and update the `env:` block accordingly.
 
 The service principal must have **Contributor** role at subscription scope so it can create the resource group and resources.
 
