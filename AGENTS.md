@@ -7,6 +7,7 @@ Purpose: fast onboarding for coding agents working in this repository.
 - Solution: `Poker.sln`
 - Backend API (ASP.NET Core + SignalR): `src/Poker.Api`
 - Frontend SPA (Angular): `src/Poker.Web`
+- Azure IaC (Bicep): `infra/`
 
 ## Product context
 
@@ -70,18 +71,21 @@ Test runner note:
 
 ## Deployment notes (Azure App Service)
 
-- Current GitHub Actions deploy target: `poqr` in resource group `pokerweu-2607021311-rg`.
+- Infrastructure is defined in `infra/` as Bicep (IaC). All resource changes must go through Bicep — do not edit Azure resources manually.
+- Current deploy target: App Service `poqr` in resource group `poqr-rg` (West Europe).
+- GitHub Actions workflow runs three jobs: `infra` (Bicep deploy) and `build` in parallel, then `deploy` once both finish.
+- Required GitHub secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` (OIDC; service principal needs Contributor at subscription scope).
 - Avoid packaging nested publish folders repeatedly.
   - Prefer publishing to a clean output directory and zipping that directory once.
   - Clean temporary artifacts after deploy when possible.
 - Keep the CI package shape aligned with manual deploys: build Angular first, publish the API to a clean directory, then copy `src/Poker.Web/dist/poker-web/browser/.` into the published `wwwroot/` before deploy.
 - Deployment flow:
   - `cd src/Poker.Web && npm run build`
-  - `dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poker-publish`
-  - Remove `/tmp/poker-publish/publish` and `/tmp/poker-publish/out` if they exist.
-  - Copy `src/Poker.Web/dist/poker-web/browser/.` into `/tmp/poker-publish/wwwroot/`.
-  - Zip `/tmp/poker-publish` once and deploy with `az webapp deploy --type zip`.
-  - Start the app after deploy with `az webapp start`.
+  - `dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poqr-publish`
+  - Remove `/tmp/poqr-publish/publish` and `/tmp/poqr-publish/out` if they exist.
+  - Copy `src/Poker.Web/dist/poker-web/browser/.` into `/tmp/poqr-publish/wwwroot/`.
+  - Zip `/tmp/poqr-publish` once and deploy with `az webapp deploy --name poqr --resource-group poqr-rg --type zip`.
+  - Clean up `/tmp/poqr-publish` and the zip file after deploy.
 
 ## Known constraints
 
