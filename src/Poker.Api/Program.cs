@@ -35,7 +35,8 @@ builder.Services.AddCors(options =>
 
 if (!builder.Environment.IsDevelopment())
 {
-	builder.WebHost.UseUrls("http://+:80");
+	var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+	builder.WebHost.UseUrls($"http://+:{port}");
 }
 else
 {
