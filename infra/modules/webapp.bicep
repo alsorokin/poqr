@@ -60,6 +60,11 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
           name: 'ASPNETCORE_ENVIRONMENT'
           value: 'Production'
         }
+        // Tell App Service front-end proxy which port Kestrel is listening on
+        {
+          name: 'WEBSITES_PORT'
+          value: '80'
+        }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: appInsights.properties.ConnectionString
