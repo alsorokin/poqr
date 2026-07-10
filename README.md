@@ -54,48 +54,75 @@ dotnet build Poker.sln
 cd src/Poker.Web && npm run build
 ```
 
-## GitHub Actions deploy package
+## Azure infrastructure (Bicep / IaC)
 
-The GitHub Actions workflow for `poqr` builds the frontend and backend separately, then deploys a single combined App Service package:
+All Azure resources are defined in `infra/`:
+
+```
+infra/
+  main.bicep           # subscription-scope entry point; creates poqr-rg
+  modules/
+    webapp.bicep       # App Service Plan + Web App + App Insights + Log Analytics
+```
+
+### Provisioned resources
+
+| Resource | Name | Notes |
+|---|---|---|
+| Resource group | `poqr-rg` | West Europe |
+| App Service Plan | `asp-poqr` | B1 Linux — AlwaysOn, WebSockets |
+| App Service | `poqr` | .NET 9, HTTPS-only |
+| Application Insights | `appi-poqr` | Workspace-based |
+| Log Analytics workspace | `log-poqr` | 30-day retention |
+
+> **Why B1?** The Basic tier enables **AlwaysOn** (no cold starts) and **WebSockets** (required for SignalR). Free/Shared tiers lack both features and will cause multi-second latency on first connection.
+
+### Deploy infrastructure manually
+
+```bash
+az deployment sub create \
+  --name poqr-infra \
+  --location westeurope \
+  --template-file infra/main.bicep
+```
+
+### GitHub Actions secrets required
+
+The workflow uses OIDC (federated identity). Set these three secrets in the repository:
+
+| Secret | Value |
+|---|---|
+| `AZURE_CLIENT_ID` | App registration client ID |
+| `AZURE_TENANT_ID` | Azure AD tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | Target subscription ID |
+
+The service principal must have **Contributor** role at subscription scope so it can create the resource group and resources.
+
+### CI/CD workflow
+
+The workflow (`.github/workflows/master_poqr.yml`) has three jobs on every push to `master`:
+
+1. **infra** — deploys Bicep (idempotent; creates/updates Azure resources)
+2. **build** — builds frontend + backend, uploads artifact *(runs in parallel with infra)*
+3. **deploy** — waits for both, then deploys the zip package to App Service
+
+### Deploy to Azure App Service manually
 
 ```bash
 cd src/Poker.Web
-npm ci
 npm run build
 
-cd /home/snay/src/poker
+rm -rf /tmp/poqr-publish
 dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poqr-publish
 rm -rf /tmp/poqr-publish/publish /tmp/poqr-publish/out
 rm -rf /tmp/poqr-publish/wwwroot/*
 cp -r src/Poker.Web/dist/poker-web/browser/. /tmp/poqr-publish/wwwroot/
+
+cd /tmp/poqr-publish
+zip -r /tmp/poqr-deploy.zip .
+az webapp deploy --name poqr --resource-group poqr-rg --src-path /tmp/poqr-deploy.zip --type zip
+rm /tmp/poqr-deploy.zip && rm -rf /tmp/poqr-publish
 ```
-
-That final `/tmp/poqr-publish` directory is what gets uploaded and deployed by the workflow.
-
-## Deploy to Azure App Service
-
-The app is deployed as a single zip package to Azure App Service. Use a clean publish directory so the package does not contain nested `publish/` or `out/` folders.
-
-```bash
-cd src/Poker.Web
-npm run build
-
-rm -rf /tmp/poker-publish
-dotnet publish ../Poker.Api/Poker.Api.csproj -c Release -o /tmp/poker-publish
-rm -rf /tmp/poker-publish/publish /tmp/poker-publish/out
-rm -rf /tmp/poker-publish/wwwroot/*
-cp -r dist/poker-web/browser/. /tmp/poker-publish/wwwroot/
-
-cd /tmp/poker-publish
-zip -r /tmp/poker-deploy.zip .
-az webapp deploy --name pokerweu-2607021311-apiw-4773 --resource-group pokerweu-2607021311-rg --src-path /tmp/poker-deploy.zip --type zip
-az webapp start --name pokerweu-2607021311-apiw-4773 --resource-group pokerweu-2607021311-rg
-```
-
-Deployment target:
-
-- App Service: `pokerweu-2607021311-apiw-4773`
-- Resource group: `pokerweu-2607021311-rg`
 
 ## Run tests
 
