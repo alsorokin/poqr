@@ -57,6 +57,10 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       alwaysOn: true
       appSettings: [
         {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Production'
+        }
+        {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: appInsights.properties.ConnectionString
         }
