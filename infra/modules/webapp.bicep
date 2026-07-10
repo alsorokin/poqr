@@ -49,6 +49,8 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|9.0'
+      // Explicit startup command so App Service knows which DLL to run
+      appCommandLine: 'dotnet Poker.Api.dll'
       // WebSockets are required for SignalR
       webSocketsEnabled: true
       // AlwaysOn prevents cold starts that cause initial latency
