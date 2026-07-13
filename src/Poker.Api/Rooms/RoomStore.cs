@@ -393,7 +393,8 @@ public sealed class RoomStore(ILogger<RoomStore>? logger = null)
 
                 if (numericVotes.Count > 0)
                 {
-                    average = Math.Round(numericVotes.Average(), 2, MidpointRounding.AwayFromZero);
+                    var rawAverage = numericVotes.Average();
+                    average = RoundUpToNearestCard(rawAverage);
                 }
             }
 
@@ -439,5 +440,25 @@ public sealed class RoomStore(ILogger<RoomStore>? logger = null)
         public string RoundId { get; } = roundId;
         public bool IsRevealed { get; set; }
         public Dictionary<string, string> Votes { get; } = new(StringComparer.Ordinal);
+    }
+
+    private static double RoundUpToNearestCard(double average)
+    {
+        var numericCardValues = CardValues
+            .Select(value => int.TryParse(value, out var parsed) ? parsed : (int?)null)
+            .Where(value => value.HasValue)
+            .Select(value => value!.Value)
+            .OrderBy(value => value)
+            .ToList();
+
+        foreach (var cardValue in numericCardValues)
+        {
+            if (average <= cardValue)
+            {
+                return cardValue;
+            }
+        }
+
+        return numericCardValues.Last();
     }
 }
