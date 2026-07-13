@@ -27,7 +27,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-// Basic B1 Linux plan — enough for SignalR; supports AlwaysOn and WebSockets
+// Basic B1 Linux plan — enough for SignalR and supports WebSockets
 resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: planName
   location: location
@@ -48,13 +48,12 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: plan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|9.0'
+      linuxFxVersion: 'DOTNETCORE|10.0'
       // Self-contained publish produces a native executable
       appCommandLine: './Poker.Api'
       // WebSockets are required for SignalR
       webSocketsEnabled: true
-      // AlwaysOn prevents cold starts that cause initial latency
-      alwaysOn: true
+      alwaysOn: false
       appSettings: [
         {
           name: 'ASPNETCORE_ENVIRONMENT'

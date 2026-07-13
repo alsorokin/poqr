@@ -70,12 +70,12 @@ infra/
 | Resource | Name | Notes |
 |---|---|---|
 | Resource group | `poqr-rg` | West Europe |
-| App Service Plan | `asp-poqr` | B1 Linux — AlwaysOn, WebSockets |
-| App Service | `poqr` | .NET 9, HTTPS-only |
+| App Service Plan | `asp-poqr` | B1 Linux — WebSockets enabled |
+| App Service | `poqr` | .NET 10, HTTPS-only |
 | Application Insights | `appi-poqr` | Workspace-based |
 | Log Analytics workspace | `log-poqr` | 30-day retention |
 
-> **Why B1?** The Basic tier enables **AlwaysOn** (no cold starts) and **WebSockets** (required for SignalR). Free/Shared tiers lack both features and will cause multi-second latency on first connection.
+> **Why B1?** The Basic tier supports **WebSockets** (required for SignalR). Free/Shared tiers lack this feature.
 
 ### Deploy infrastructure manually
 
