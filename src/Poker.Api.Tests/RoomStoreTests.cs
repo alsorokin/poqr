@@ -56,7 +56,7 @@ public sealed class RoomStoreTests
     }
 
     [Fact]
-    public void RoundLifecycle_ComputesAverage_FromNumericVotesOnly()
+    public void RoundLifecycle_ComputesAverage_AsNextHigherCard_FromNumericVotesOnly()
     {
         var store = new RoomStore();
         var created = store.CreateSession("Host");
@@ -83,9 +83,36 @@ public sealed class RoomStoreTests
         Assert.NotNull(revealed);
         Assert.NotNull(revealed!.CurrentRound);
         Assert.True(revealed.CurrentRound!.IsRevealed);
-        Assert.Equal(4, revealed.CurrentRound.Average);
+        Assert.Equal(5, revealed.CurrentRound.Average);
         Assert.NotNull(revealed.CurrentRound.RevealedVotes);
         Assert.Equal("Joker", revealed.CurrentRound.RevealedVotes![third.Value.ParticipantId]);
+    }
+
+    [Fact]
+    public void RoundLifecycle_ComputesAverage_AsNextHigherCard_ForNonMatchingRawAverage()
+    {
+        var store = new RoomStore();
+        var created = store.CreateSession("Host");
+
+        var second = store.JoinSession(created.SessionId, "Bob", null);
+
+        Assert.NotNull(second);
+
+        var started = store.StartRound(created.SessionId, created.ParticipantId);
+
+        Assert.NotNull(started);
+        Assert.NotNull(started!.CurrentRound);
+
+        var roundId = started.CurrentRound!.RoundId;
+
+        Assert.NotNull(store.CastVote(created.SessionId, created.ParticipantId, roundId, "8"));
+        Assert.NotNull(store.CastVote(created.SessionId, second.Value.ParticipantId, roundId, "13"));
+
+        var revealed = store.RevealRound(created.SessionId, created.ParticipantId, roundId);
+
+        Assert.NotNull(revealed);
+        Assert.NotNull(revealed!.CurrentRound);
+        Assert.Equal(13, revealed.CurrentRound!.Average);
     }
 
     [Fact]
