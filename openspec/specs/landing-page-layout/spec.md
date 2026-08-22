@@ -26,3 +26,16 @@ The landing page SHALL keep every entry control usable at narrow viewport widths
 #### Scenario: Viewing on a narrow viewport
 - **WHEN** a user opens the landing page on a narrow viewport
 - **THEN** the name field, session-code field, and both actions remain readable, reachable, and contained within the page
+
+### Requirement: Responsive logo placement
+The landing and in-room cinema logos SHALL remain visible, reachable where
+interactive, and contained without overlapping session controls at narrow
+viewport widths.
+
+#### Scenario: Viewing the landing page on a narrow viewport
+- **WHEN** a user opens the landing page on a narrow viewport
+- **THEN** the cinema logo and all session-entry controls remain readable, reachable, and contained within the page
+
+#### Scenario: Viewing a room on a narrow viewport
+- **WHEN** a user opens a joined session on a narrow viewport
+- **THEN** the interactive cinema logo, session details, and Leave action remain visible and reachable without overlap
