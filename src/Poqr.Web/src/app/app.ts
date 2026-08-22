@@ -186,14 +186,17 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  async leave(): Promise<void> {
+  leave(): void {
     if (!this.sessionId || !this.participantId) {
       this.resetRoom();
       return;
     }
 
-    await this.pokerClient.leaveSession(this.sessionId, this.participantId);
+    const leaveRequest = this.pokerClient.leaveSession(this.sessionId, this.participantId);
     this.resetRoom();
+    void leaveRequest.catch((error: unknown) => {
+      console.error('Unable to leave the session.', error);
+    });
   }
 
   hasVoted(participantId: string): boolean {

@@ -203,19 +203,35 @@ button.ghost {
 .copy-session-link {
   display: inline-grid;
   flex: 0 0 auto;
-  width: 2.5rem;
-  padding: 0.45rem;
+  width: auto;
+  height: auto;
+  padding: 0.1rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  line-height: 1;
   place-items: center;
 }
 
 .copy-session-link svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1em;
+  height: 1em;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+.copy-session-link:hover {
+  background: #f0f4ff;
+  color: #2854d7;
+}
+
+.copy-session-link:focus-visible {
+  outline: 2px solid #2854d7;
+  outline-offset: 2px;
 }
 
 .room-grid {
@@ -397,18 +413,12 @@ li.participant-disconnected {
     font-size: 0.9rem;
   }
 
-  .room-header .ghost,
-  .copy-session-link {
+  .room-header .ghost {
     height: 2.1rem;
   }
 
   .room-header .ghost {
     padding-inline: 0.5rem;
-  }
-
-  .copy-session-link {
-    width: 2.1rem;
-    padding: 0.35rem;
   }
 
   .entry-row {

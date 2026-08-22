@@ -311,19 +311,26 @@ describe('App', () => {
     expect(app.selectedCard).toBeNull();
   });
 
-  it('leaves active room and clears local state', async () => {
+  it('clears local state immediately while the leave request is pending', () => {
+    let resolveLeaveRequest!: () => void;
+    pokerClient.leaveSession.and.returnValue(new Promise<void>((resolve) => {
+      resolveLeaveRequest = resolve;
+    }));
+
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     app.sessionId = 'ABC123';
     app.participantId = 'p1';
     app.roomState = buildRoomState();
 
-    await app.leave();
+    app.leave();
 
     expect(pokerClient.leaveSession).toHaveBeenCalledWith('ABC123', 'p1');
     expect(app.sessionId).toBeNull();
     expect(app.participantId).toBeNull();
     expect(app.roomState).toBeNull();
+
+    resolveLeaveRequest();
   });
 
   it('activates the room cinema logo and restarts it for each received event', async () => {
