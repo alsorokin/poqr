@@ -147,7 +147,15 @@ Optional variants:
 ```bash
 npm run test:watch
 npm run test:ci
+npm run test:e2e
 ```
+
+`npm run test:e2e` starts isolated local API and frontend servers, then runs
+every `src/Poqr.Web/e2e/*.e2e.mjs` scenario with Puppeteer. Add a scenario module
+exporting `name` and `run(context)` to extend browser coverage. The initial
+cinema-logo scenario verifies two-tab propagation, repeated activations,
+active/revealed rounds, and rejoining; room scoping is covered by backend hub
+tests. The command requires ports 4200 and 5057 to be available.
 
 ## Notes
 

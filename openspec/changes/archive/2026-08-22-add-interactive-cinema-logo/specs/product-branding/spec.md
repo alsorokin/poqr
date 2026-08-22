@@ -1,11 +1,4 @@
-# product-branding Specification
-
-## Purpose
-
-Present one concise Poqr identity wherever people encounter the web application
-or its browser-provided metadata, while retaining its planning-poker purpose.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Consistent Poqr product identity
 The application SHALL identify itself as `Poqr` in its visible landing-page

@@ -34,6 +34,11 @@ Purpose: fast onboarding for coding agents working in this repository.
 - Frontend tests (Karma + Puppeteer headless Chromium):
   - `cd src/Poqr.Web && npm run test`
   - `cd src/Poqr.Web && npm run test:watch`
+- Browser E2E test (Puppeteer):
+  - `cd src/Poqr.Web && npm run test:e2e`
+  - Starts local API/frontend servers and requires ports 5057 and 4200 to be free.
+  - Discovers scenarios in `src/Poqr.Web/e2e/*.e2e.mjs`; add a module exporting
+    `name` and `run(context)` for new browser coverage.
 
 ## Agent workflow expectations
 
@@ -57,6 +62,7 @@ Purpose: fast onboarding for coding agents working in this repository.
 - Run backend tests when backend behavior changes: `cd src/Poqr.Api.Tests && dotnet test`
 - Run frontend build: `cd src/Poqr.Web && npm run build`
 - Run frontend tests when UI/service logic changed: `cd src/Poqr.Web && npm run test`
+- Run `cd src/Poqr.Web && npm run test:e2e` for two-tab SignalR behavior changes.
 - For realtime/session behavior changes, manually verify with two browser tabs.
 
 ## Documentation sync rule

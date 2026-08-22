@@ -5,6 +5,8 @@ namespace Poqr.Api.Hubs;
 
 public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hub
 {
+    private static readonly string[] CinemaFruits = ["🍎", "🍌", "🍇", "🍓", "🍍", "🍉"];
+
     private static readonly Dictionary<string, (string SessionId, string ParticipantId)> ConnectionMap =
         new(StringComparer.Ordinal);
     private static readonly Dictionary<string, HashSet<string>> ParticipantConnections =
@@ -120,6 +122,51 @@ public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hu
         await HandleLeave(command.SessionId, command.ParticipantId);
     }
 
+    public async Task ActivateCinemaLogo()
+    {
+        (string SessionId, string ParticipantId)? connection = null;
+
+        lock (ConnectionGate)
+        {
+            if (ConnectionMap.TryGetValue(Context.ConnectionId, out var info))
+            {
+                connection = info;
+            }
+        }
+
+        if (connection is null)
+        {
+            logger.LogWarning(
+                "Hub ActivateCinemaLogo rejected for unregistered connection {ConnectionId}.",
+                Context.ConnectionId);
+            return;
+        }
+
+        var state = roomStore.GetState(connection.Value.SessionId);
+        var participantIsConnected = state?.Participants.Any(participant =>
+            participant.ParticipantId == connection.Value.ParticipantId
+            && participant.IsConnected) == true;
+
+        if (!participantIsConnected)
+        {
+            logger.LogWarning(
+                "Hub ActivateCinemaLogo rejected for stale participant {ParticipantId} in session {SessionId}.",
+                connection.Value.ParticipantId,
+                connection.Value.SessionId);
+            return;
+        }
+
+        logger.LogDebug(
+            "Hub ActivateCinemaLogo requested for session {SessionId} by participant {ParticipantId}.",
+            connection.Value.SessionId,
+            connection.Value.ParticipantId);
+
+        var fruitEffect = SelectCinemaFruitEffect(state!);
+        await Clients.Group(connection.Value.SessionId).SendAsync(
+            "CinemaLogoActivated",
+            new CinemaLogoActivatedEnvelope(fruitEffect));
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         (string SessionId, string ParticipantId)? found = null;
@@ -210,6 +257,30 @@ public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hu
 
     private static string ParticipantKey(string sessionId, string participantId)
         => $"{sessionId.ToUpperInvariant()}:{participantId}";
+
+    private static CinemaFruitEffect? SelectCinemaFruitEffect(RoomStateDto state)
+    {
+        var round = state.CurrentRound;
+        if (round is null || round.IsRevealed)
+        {
+            return null;
+        }
+
+        var eligibleParticipants = state.Participants
+            .Where(participant =>
+                participant.IsConnected
+                && !round.VotedParticipantIds.Contains(participant.ParticipantId))
+            .ToList();
+        if (eligibleParticipants.Count == 0)
+        {
+            return null;
+        }
+
+        var participant = eligibleParticipants[Random.Shared.Next(eligibleParticipants.Count)];
+        return new CinemaFruitEffect(
+            participant.ParticipantId,
+            CinemaFruits[Random.Shared.Next(CinemaFruits.Length)]);
+    }
 
     private static void RemoveParticipantConnections(string sessionId, string participantId)
     {

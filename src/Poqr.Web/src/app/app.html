@@ -1,6 +1,11 @@
 <main class="page">
   <section class="panel landing-panel" *ngIf="!sessionId">
-    <h1>Poqr</h1>
+    <div class="brand-logo landing-logo" role="img" aria-label="Pure cinema">
+      <span aria-hidden="true">✋</span>
+      <span aria-hidden="true">🗿</span>
+      <span class="brand-hand--mirrored" aria-hidden="true">✋</span>
+      <h1>Poqr</h1>
+    </div>
     <p class="subtitle">Anonymous sessions, quick voting, reveal anytime.</p>
 
     <div class="session-entry">
@@ -30,6 +35,16 @@
 
   <section class="panel" *ngIf="sessionId && roomState">
     <header class="room-header">
+      <button class="cinema-logo-button" (click)="activateCinemaLogo()" aria-label="Pure cinema">
+        <ng-container *ngFor="let animationKey of [cinemaLogoAnimationKey]">
+          <span class="brand-logo room-logo" [attr.data-animation-key]="animationKey" aria-hidden="true">
+            <span>✋</span>
+            <span>🗿</span>
+            <span class="brand-hand--mirrored">✋</span>
+            <span class="room-logo-wordmark">Poqr</span>
+          </span>
+        </ng-container>
+      </button>
       <div>
         <h2>Session {{ roomState.sessionId }}</h2>
         <p>Share link: <a [href]="shareLink">{{ shareLink }}</a></p>
@@ -41,7 +56,10 @@
       <article class="card participants">
         <h3>Participants</h3>
         <ul>
-          <li *ngFor="let participant of roomState.participants" [class.participant-disconnected]="!participant.isConnected">
+          <li
+            *ngFor="let participant of roomState.participants"
+            [attr.id]="'participant-' + participant.participantId"
+            [class.participant-disconnected]="!participant.isConnected">
             <span class="participant-name">
               <span>{{ participant.name }}</span>
               <span class="status connected" *ngIf="participant.isConnected">Online</span>
@@ -86,4 +104,19 @@
 
     <p class="error" *ngIf="error">{{ error }}</p>
   </section>
+
+  <div
+    *ngFor="let effect of cinemaFruitEffects"
+    class="cinema-fruit-effect"
+    [class.cinema-fruit-effect--exploding]="effect.isExploding"
+    [attr.data-fruit-id]="effect.id"
+    [attr.data-fruit-target]="effect.fruitEffect.participantId"
+    [style.--fruit-start-x]="effect.startX"
+    [style.--fruit-start-y]="effect.startY"
+    [style.--fruit-target-x]="effect.targetX"
+    [style.--fruit-target-y]="effect.targetY"
+    aria-hidden="true">
+    <span *ngIf="!effect.isExploding">{{ effect.fruitEffect.fruit }}</span>
+    <span *ngIf="effect.isExploding">💥</span>
+  </div>
 </main>

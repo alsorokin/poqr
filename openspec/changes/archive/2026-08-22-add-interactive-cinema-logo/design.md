@@ -1,0 +1,129 @@
+## Context
+
+See `proposal.md` for motivation. The Angular root component currently renders
+both the landing and room views; its `PokerClientService` already translates
+SignalR events into client observables. `PokerHub` owns transient connection
+membership and broadcasts room events, while `RoomStore` owns persistent-in-room
+business state and round invariants.
+
+## Goals / Non-Goals
+
+**Goals:**
+
+- Use a mirrored pair of upright `✋` hands around the moai as a recognizable logo.
+- Make the room interaction immediate, room-scoped, and repeatable for every
+  valid click.
+- Keep the visual identity usable on desktop and narrow layouts.
+
+**Non-Goals:**
+
+- Store an activation in `RoomStore`, include it in `RoomStateDto`, or replay it
+  after a join/reconnect.
+- Change the REST API, session lifecycle, participant membership, or round
+  authority.
+- Add animation assets or a frontend animation dependency.
+
+## Decisions
+
+### Use one CSS/text logo component within the root template
+
+The landing and room views will share markup/classes for the `✋🗿✋` emoji mark
+and `Poqr` wordmark. One `✋` is wrapped in an inline element and mirrored with
+`scaleX(-1)` so both hands remain upright while appearing as opposite hands.
+The combined wordmark has one accessible "Pure cinema" label, and its
+decorative emoji spans are hidden from assistive technology. The landing
+instance receives a one-time tilted entrance animation; the room instance is an
+accessible button placed in the room header. CSS media queries will
+resize/reflow the header rather than fixing the control to the viewport,
+preventing overlap with session details and Leave.
+
+CSS keyframes avoid a new runtime dependency and allow `prefers-reduced-motion`
+to suppress the landing entrance motion. The exact theatrical motion styling is
+an implementation choice as long as every activation visibly restarts the
+in-room animation.
+
+### Send a transient SignalR activation event
+
+`PokerHub` will expose an `ActivateCinemaLogo` hub method with no client-supplied
+session or participant identifiers. It will resolve the caller from its existing
+`ConnectionMap`; an absent or stale mapping is rejected without a group
+broadcast. A valid call sends `CinemaLogoActivated` to the caller's session
+group.
+
+For an unrevealed round, `PokerHub` uses the current `RoomStore` state to select
+one participant outside `VotedParticipantIds` and one fruit from a fixed emoji
+list. It includes those values in an optional event payload so every recipient
+animates the same fruit toward the same participant. Each recipient uses the
+current bounds of its in-room cinema-logo button as the local flight origin. For
+an absent/revealed round or no eligible participant, the event has no fruit
+payload. This selection is transient: it does not mutate `RoomStore` or replay
+after a reconnect.
+
+`PokerClientService` will invoke `ActivateCinemaLogo`, subscribe to
+`CinemaLogoActivated`, and expose a transient observable to `App`. `App` will
+use an incrementing animation key/state to restart its CSS animation for every
+event, including events arriving before a previous animation ends. When the
+event includes a fruit payload, `App` resolves the target participant row and
+the in-room cinema-logo button, renders an absolute overlay from that button,
+and replaces the fruit with an explosion before removing the overlay. If a
+client no longer has the target row or logo, it omits only the local fruit
+effect.
+
+This avoids allowing a client to name another session, avoids a `RoomStore`
+mutation for a non-business interaction, and keeps the event ephemeral.
+The alternative—adding an activation counter to `RoomStateDto`—would replay
+stale animation state on every room update and couple a visual fidget to the
+authoritative game state.
+
+### Keep contract additions minimal and synchronized
+
+The affected SignalR contract consists of hub method `ActivateCinemaLogo` and
+server event `CinemaLogoActivated`, whose optional fruit payload contains
+`participantId` and `fruit`. A C# event-envelope record in
+`Contracts/PokerContracts.cs` and its TypeScript equivalent in `poker.types.ts`
+keep the payload synchronized. No REST routes or client command records are
+needed because caller identity is derived from the hub connection.
+
+`PokerHub` remains authoritative for transient connection-scoped delivery.
+`RoomStore` remains authoritative for room and round business invariants and is
+intentionally not changed.
+
+### Make browser validation reusable
+
+`npm run test:e2e` starts local API and Angular development-server processes,
+launches Puppeteer, and discovers independent scenario modules under
+`src/Poqr.Web/e2e/`. Each scenario exports a name and a function that receives
+the browser, frontend URL, and shared CDP click helper, so future browser flows
+can be added without copying server startup and cleanup logic.
+
+The cinema-logo scenario uses reduced-motion mode because it validates SignalR
+delivery rather than visual keyframes. It uses Chrome DevTools Protocol input
+events for controls whose animation makes Puppeteer's ordinary element click
+evaluation unreliable. The runner terminates the processes it started on both
+success and failure; ports 4200 and 5057 must be free before it begins.
+
+## Risks / Trade-offs
+
+- **Unlimited clicks can create noisy or visually chaotic rooms** → This is an
+  explicit product decision; every valid activation is forwarded without
+  throttling.
+- **A reconnecting client can miss activations while disconnected** → Events are
+  intentionally not persisted or replayed; subsequent events arrive after the
+  normal rejoin flow completes.
+- **Rapid DOM animation restarts can be inconsistent if only a CSS class is
+  toggled** → Use a monotonically changing render key or equivalent DOM
+  replacement so every received event visibly restarts the animation.
+- **Emoji glyphs vary by platform** → Use the existing text emoji representation
+  rather than claiming pixel-identical artwork across platforms.
+- **The target row can disappear before a client renders the effect** → The client
+  skips that local overlay while preserving the shared logo animation.
+- **Browser scenarios need local server ports** → The runner checks that ports
+  4200 and 5057 are available and terminates only the processes it starts.
+
+## Migration Plan
+
+Deploy frontend and backend together so the new UI has a matching hub handler.
+Older clients remain functional because the new server event is additive; a
+newer client connected to an older server receives a failed invocation but does
+not affect voting. Rollback removes the additive handler and returns the UI to
+the prior static layout; no persisted data or migration is involved.

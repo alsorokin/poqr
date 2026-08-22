@@ -2,13 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { App } from './app';
 import { PokerClientService } from './poker-client.service';
-import { RoomState, SessionJoinResponse } from './poker.types';
+import { CinemaLogoActivatedEnvelope, RoomState, SessionJoinResponse } from './poker.types';
 
 describe('App', () => {
   let pokerClient: jasmine.SpyObj<PokerClientService> & {
     state$: Subject<RoomState>;
     error$: Subject<string>;
     sessionClosed$: Subject<string>;
+    cinemaLogoActivated$: Subject<CinemaLogoActivatedEnvelope>;
   };
 
   const buildRoomState = (overrides?: Partial<RoomState>): RoomState => ({
@@ -38,22 +39,25 @@ describe('App', () => {
   beforeEach(async () => {
     pokerClient = jasmine.createSpyObj<PokerClientService>(
       'PokerClientService',
-      ['createSession', 'joinSession', 'connect', 'startRound', 'castVote', 'revealRound', 'leaveSession'],
+      ['createSession', 'joinSession', 'connect', 'startRound', 'castVote', 'revealRound', 'activateCinemaLogo', 'leaveSession'],
       {
         state$: new Subject<RoomState>(),
         error$: new Subject<string>(),
-        sessionClosed$: new Subject<string>()
+        sessionClosed$: new Subject<string>(),
+        cinemaLogoActivated$: new Subject<CinemaLogoActivatedEnvelope>()
       }
     ) as jasmine.SpyObj<PokerClientService> & {
       state$: Subject<RoomState>;
       error$: Subject<string>;
       sessionClosed$: Subject<string>;
+      cinemaLogoActivated$: Subject<CinemaLogoActivatedEnvelope>;
     };
 
     pokerClient.connect.and.resolveTo();
     pokerClient.startRound.and.resolveTo();
     pokerClient.castVote.and.resolveTo();
     pokerClient.revealRound.and.resolveTo();
+    pokerClient.activateCinemaLogo.and.resolveTo();
     pokerClient.leaveSession.and.resolveTo();
 
     sessionStorage.clear();
@@ -77,6 +81,17 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Poqr');
+  });
+
+  it('renders the tilted accessible cinema logo on the landing page', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logo = compiled.querySelector<HTMLElement>('.landing-logo');
+
+    expect(logo?.getAttribute('aria-label')).toBe('Pure cinema');
+    expect(logo?.textContent).toContain('✋🗿✋');
+    expect(logo?.querySelector('.brand-hand--mirrored')).not.toBeNull();
   });
 
   it('renders mirrored accessible create and join session paths with their existing disabled states', () => {
@@ -275,6 +290,98 @@ describe('App', () => {
     expect(app.sessionId).toBeNull();
     expect(app.participantId).toBeNull();
     expect(app.roomState).toBeNull();
+  });
+
+  it('activates the room cinema logo and restarts it for each received event', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.participantId = 'p1';
+    app.roomState = buildRoomState();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logoButton = compiled.querySelector<HTMLButtonElement>('.cinema-logo-button');
+    expect(logoButton?.getAttribute('aria-label')).toBe('Pure cinema');
+    expect(logoButton?.querySelector('.brand-hand--mirrored')).not.toBeNull();
+
+    logoButton?.click();
+    await fixture.whenStable();
+    expect(pokerClient.activateCinemaLogo).toHaveBeenCalled();
+
+    pokerClient.cinemaLogoActivated$.next({ fruitEffect: null });
+    pokerClient.cinemaLogoActivated$.next({ fruitEffect: null });
+    expect(app.cinemaLogoAnimationKey).toBe(2);
+  });
+
+  it('keeps overlapping fruit effects independent through their explosions and cleanup', () => {
+    jasmine.clock().install();
+
+    try {
+      const fixture = TestBed.createComponent(App);
+      const app = fixture.componentInstance;
+      app.sessionId = 'ABC123';
+      app.participantId = 'p1';
+      app.roomState = buildRoomState();
+      fixture.detectChanges();
+      const compiled = fixture.nativeElement as HTMLElement;
+      const logo = compiled.querySelector<HTMLElement>('.cinema-logo-button');
+      const target = compiled.querySelector<HTMLElement>('#participant-p2');
+      spyOn(logo!, 'getBoundingClientRect').and.returnValue(new DOMRect(20, 30, 40, 50));
+      spyOn(target!, 'getBoundingClientRect').and.returnValue(new DOMRect(100, 120, 60, 70));
+
+      pokerClient.cinemaLogoActivated$.next({
+        fruitEffect: { participantId: 'p2', fruit: '🍓' }
+      });
+      fixture.detectChanges();
+
+      expect(app.cinemaFruitEffects.length).toBe(1);
+      expect(app.cinemaFruitEffects[0].fruitEffect.participantId).toBe('p2');
+      expect(app.cinemaFruitEffects[0].startX).toBe('40px');
+      expect(app.cinemaFruitEffects[0].startY).toBe('55px');
+      expect(app.cinemaFruitEffects[0].targetX).toBe('130px');
+      expect(app.cinemaFruitEffects[0].targetY).toBe('155px');
+      expect(fixture.nativeElement.querySelector('.cinema-fruit-effect')?.textContent).toContain('🍓');
+
+      jasmine.clock().tick(300);
+      pokerClient.cinemaLogoActivated$.next({
+        fruitEffect: { participantId: 'p2', fruit: '🍌' }
+      });
+      fixture.detectChanges();
+      expect(app.cinemaFruitEffects.length).toBe(2);
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[0]?.textContent).toContain('🍓');
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[1]?.textContent).toContain('🍌');
+
+      jasmine.clock().tick(350);
+      fixture.detectChanges();
+      expect(app.cinemaFruitEffects[0].isExploding).toBeTrue();
+      expect(app.cinemaFruitEffects[1].isExploding).toBeFalse();
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[0]?.textContent).toContain('💥');
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[1]?.textContent).toContain('🍌');
+
+      jasmine.clock().tick(650);
+      fixture.detectChanges();
+      expect(app.cinemaFruitEffects).toEqual([]);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('clears active fruit effects when the component is destroyed', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.participantId = 'p1';
+    app.roomState = buildRoomState();
+    fixture.detectChanges();
+
+    pokerClient.cinemaLogoActivated$.next({
+      fruitEffect: { participantId: 'p2', fruit: '🍓' }
+    });
+    expect(app.cinemaFruitEffects.length).toBe(1);
+
+    fixture.destroy();
+    expect(app.cinemaFruitEffects).toEqual([]);
   });
 
   it('locks starting a new vote for 5 seconds right after reveal', async () => {

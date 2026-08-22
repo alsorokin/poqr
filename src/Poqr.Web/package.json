@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "node ./scripts/run-karma-tests.mjs",
     "test:watch": "node ./scripts/run-karma-tests.mjs --watch",
-    "test:ci": "node ./scripts/run-karma-tests.mjs --watch=false --browsers=ChromeHeadless"
+    "test:ci": "node ./scripts/run-karma-tests.mjs --watch=false --browsers=ChromeHeadless",
+    "test:e2e": "node ./scripts/run-e2e-tests.mjs"
   },
   "prettier": {
     "printWidth": 100,
