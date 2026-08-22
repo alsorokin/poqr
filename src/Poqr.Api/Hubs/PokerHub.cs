@@ -5,6 +5,8 @@ namespace Poqr.Api.Hubs;
 
 public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hub
 {
+    private static readonly string[] CinemaFruits = ["🍎", "🍌", "🍇", "🍓", "🍍", "🍉"];
+
     private static readonly Dictionary<string, (string SessionId, string ParticipantId)> ConnectionMap =
         new(StringComparer.Ordinal);
     private static readonly Dictionary<string, HashSet<string>> ParticipantConnections =
@@ -159,7 +161,10 @@ public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hu
             connection.Value.SessionId,
             connection.Value.ParticipantId);
 
-        await Clients.Group(connection.Value.SessionId).SendAsync("CinemaLogoActivated");
+        var fruitEffect = SelectCinemaFruitEffect(state!);
+        await Clients.Group(connection.Value.SessionId).SendAsync(
+            "CinemaLogoActivated",
+            new CinemaLogoActivatedEnvelope(fruitEffect));
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -252,6 +257,30 @@ public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hu
 
     private static string ParticipantKey(string sessionId, string participantId)
         => $"{sessionId.ToUpperInvariant()}:{participantId}";
+
+    private static CinemaFruitEffect? SelectCinemaFruitEffect(RoomStateDto state)
+    {
+        var round = state.CurrentRound;
+        if (round is null || round.IsRevealed)
+        {
+            return null;
+        }
+
+        var eligibleParticipants = state.Participants
+            .Where(participant =>
+                participant.IsConnected
+                && !round.VotedParticipantIds.Contains(participant.ParticipantId))
+            .ToList();
+        if (eligibleParticipants.Count == 0)
+        {
+            return null;
+        }
+
+        var participant = eligibleParticipants[Random.Shared.Next(eligibleParticipants.Count)];
+        return new CinemaFruitEffect(
+            participant.ParticipantId,
+            CinemaFruits[Random.Shared.Next(CinemaFruits.Length)]);
+    }
 
     private static void RemoveParticipantConnections(string sessionId, string participantId)
     {

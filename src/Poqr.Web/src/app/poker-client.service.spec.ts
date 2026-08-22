@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { PokerClientService } from './poker-client.service';
+import { CinemaLogoActivatedEnvelope } from './poker.types';
 
 describe('PokerClientService', () => {
   it('invokes the additive cinema logo hub method', async () => {
@@ -15,12 +16,19 @@ describe('PokerClientService', () => {
 
   it('emits each received cinema logo activation', () => {
     const service = new PokerClientService({} as HttpClient);
-    const received: void[] = [];
-    service.cinemaLogoActivated$.subscribe(() => received.push(undefined));
+    const received: CinemaLogoActivatedEnvelope[] = [];
+    service.cinemaLogoActivated$.subscribe((envelope) => received.push(envelope));
 
-    (service as unknown as { notifyCinemaLogoActivated(): void }).notifyCinemaLogoActivated();
-    (service as unknown as { notifyCinemaLogoActivated(): void }).notifyCinemaLogoActivated();
+    const notify = service as unknown as {
+      notifyCinemaLogoActivated(envelope: CinemaLogoActivatedEnvelope): void;
+    };
+    notify.notifyCinemaLogoActivated({ fruitEffect: null });
+    notify.notifyCinemaLogoActivated({
+      fruitEffect: { participantId: 'p1', fruit: '🍎' }
+    });
 
     expect(received).toHaveSize(2);
+    expect(received[0].fruitEffect).toBeNull();
+    expect(received[1].fruitEffect?.fruit).toBe('🍎');
   });
 });

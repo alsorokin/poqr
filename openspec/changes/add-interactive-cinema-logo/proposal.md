@@ -16,6 +16,9 @@ lightweight room interaction without changing planning-poker rules.
   all connected participants in that room.
 - Deliver every valid click immediately, with no cooldown, debounce, queue, or
   suppression, including while a round is active or revealed.
+- During an unrevealed round, send a shared random fruit from the activated
+  cinema logo to one participant who has not voted, briefly replace it with an
+  explosion, then remove it without changing the round.
 - Keep logo placement and session controls usable on narrow viewports.
 
 ## Capabilities
@@ -33,12 +36,12 @@ lightweight room interaction without changing planning-poker rules.
 
 ## Impact
 
-- **Frontend:** Angular root template, component state, styles, unit tests, and
-  reusable browser E2E scenarios.
+- **Frontend:** Angular root template, component state, animation overlay,
+  styles, unit tests, and reusable browser E2E scenarios.
 - **Backend:** `PokerHub` gains a room-scoped logo-activation method and broadcast;
-  no `RoomStore` state change is needed.
+  it selects the transient fruit target from `RoomStore` state without mutating it.
 - **Shared contracts:** New SignalR method/event names and their TypeScript handler
-  must stay synchronized; no REST route changes.
+  and payload must stay synchronized; no REST route changes.
 - **Infrastructure:** No change; the existing single-instance WebSocket-enabled
   SignalR deployment remains sufficient.
 - **Documentation:** Document the `npm run test:e2e` browser-validation command

@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { PokerClientService } from './poker-client.service';
-import { RoomState, SessionJoinResponse } from './poker.types';
+import { CinemaFruitEffect, CinemaLogoActivatedEnvelope, RoomState, SessionJoinResponse } from './poker.types';
 
 @Component({
   selector: 'app-root',
@@ -24,12 +24,20 @@ export class App implements OnInit, OnDestroy {
   roomState: RoomState | null = null;
   error = '';
   cinemaLogoAnimationKey = 0;
+  cinemaFruitEffect: CinemaFruitEffect | null = null;
+  cinemaFruitEffectIsExploding = false;
+  cinemaFruitStartX = '0px';
+  cinemaFruitStartY = '0px';
+  cinemaFruitTargetX = '0px';
+  cinemaFruitTargetY = '0px';
 
   private subscriptions: Subscription[] = [];
   private isStartNewVoteLocked = false;
   private startNewVoteLockTimeout: ReturnType<typeof setTimeout> | null = null;
   private previousRoundId: string | null = null;
   private previousRoundRevealed = false;
+  private cinemaFruitExplosionTimeout: ReturnType<typeof setTimeout> | null = null;
+  private cinemaFruitCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly pokerClient: PokerClientService) {}
 
@@ -93,14 +101,16 @@ export class App implements OnInit, OnDestroy {
     );
 
     this.subscriptions.push(
-      this.pokerClient.cinemaLogoActivated$.subscribe(() => {
+      this.pokerClient.cinemaLogoActivated$.subscribe((envelope) => {
         this.cinemaLogoAnimationKey += 1;
+        this.showCinemaFruitEffect(envelope);
       })
     );
   }
 
   ngOnDestroy(): void {
     this.clearStartNewVoteLock();
+    this.clearCinemaFruitEffect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
@@ -227,6 +237,7 @@ export class App implements OnInit, OnDestroy {
 
   private resetRoom(): void {
     this.clearStartNewVoteLock();
+    this.clearCinemaFruitEffect();
     this.previousRoundId = null;
     this.previousRoundRevealed = false;
     this.sessionId = null;
@@ -278,5 +289,56 @@ export class App implements OnInit, OnDestroy {
       clearTimeout(this.startNewVoteLockTimeout);
       this.startNewVoteLockTimeout = null;
     }
+  }
+
+  private showCinemaFruitEffect(envelope: CinemaLogoActivatedEnvelope): void {
+    const effect = envelope.fruitEffect;
+    if (!effect) {
+      return;
+    }
+
+    const target = document.getElementById(`participant-${effect.participantId}`);
+    const logo = document.querySelector<HTMLElement>('.cinema-logo-button');
+    if (!target || !logo) {
+      return;
+    }
+
+    this.clearCinemaFruitEffect();
+    const targetBounds = target.getBoundingClientRect();
+    const logoBounds = logo.getBoundingClientRect();
+    const targetX = targetBounds.left + (targetBounds.width / 2);
+    const targetY = targetBounds.top + (targetBounds.height / 2);
+    const startX = logoBounds.left + (logoBounds.width / 2);
+    const startY = logoBounds.top + (logoBounds.height / 2);
+
+    this.cinemaFruitEffect = effect;
+    this.cinemaFruitEffectIsExploding = false;
+    this.cinemaFruitStartX = `${startX}px`;
+    this.cinemaFruitStartY = `${startY}px`;
+    this.cinemaFruitTargetX = `${targetX}px`;
+    this.cinemaFruitTargetY = `${targetY}px`;
+
+    this.cinemaFruitExplosionTimeout = setTimeout(() => {
+      this.cinemaFruitEffectIsExploding = true;
+      this.cinemaFruitExplosionTimeout = null;
+    }, 650);
+    this.cinemaFruitCleanupTimeout = setTimeout(() => {
+      this.clearCinemaFruitEffect();
+    }, 1000);
+  }
+
+  private clearCinemaFruitEffect(): void {
+    if (this.cinemaFruitExplosionTimeout !== null) {
+      clearTimeout(this.cinemaFruitExplosionTimeout);
+      this.cinemaFruitExplosionTimeout = null;
+    }
+
+    if (this.cinemaFruitCleanupTimeout !== null) {
+      clearTimeout(this.cinemaFruitCleanupTimeout);
+      this.cinemaFruitCleanupTimeout = null;
+    }
+
+    this.cinemaFruitEffect = null;
+    this.cinemaFruitEffectIsExploding = false;
   }
 }

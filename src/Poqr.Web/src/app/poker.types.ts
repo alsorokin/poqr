@@ -28,3 +28,12 @@ export interface SessionJoinResponse {
 export interface ErrorEnvelope {
   message: string;
 }
+
+export interface CinemaFruitEffect {
+  participantId: string;
+  fruit: string;
+}
+
+export interface CinemaLogoActivatedEnvelope {
+  fruitEffect: CinemaFruitEffect | null;
+}

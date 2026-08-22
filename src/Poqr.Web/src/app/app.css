@@ -269,6 +269,24 @@ li.participant-disconnected {
   font-weight: 600;
 }
 
+.cinema-fruit-effect {
+  position: fixed;
+  z-index: 10;
+  left: var(--fruit-start-x);
+  top: var(--fruit-start-y);
+  font-size: 2rem;
+  line-height: 1;
+  pointer-events: none;
+  animation: cinema-fruit-flight 650ms ease-in forwards;
+}
+
+.cinema-fruit-effect--exploding {
+  left: var(--fruit-target-x);
+  top: var(--fruit-target-y);
+  transform: translate(-50%, -50%);
+  animation: cinema-fruit-explosion 350ms ease-out both;
+}
+
 @keyframes cinema-logo-entrance {
   from {
     opacity: 0;
@@ -278,6 +296,26 @@ li.participant-disconnected {
   to {
     opacity: 1;
     transform: rotate(-4deg) scale(1);
+  }
+}
+
+@keyframes cinema-fruit-flight {
+  to {
+    left: var(--fruit-target-x);
+    top: var(--fruit-target-y);
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes cinema-fruit-explosion {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
   }
 }
 
@@ -336,7 +374,8 @@ li.participant-disconnected {
 
 @media (prefers-reduced-motion: reduce) {
   .landing-logo,
-  .room-logo {
+  .room-logo,
+  .cinema-fruit-effect {
     animation: none;
   }
 }

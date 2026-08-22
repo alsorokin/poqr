@@ -28,3 +28,5 @@ public sealed record LeaveSessionCommand(string SessionId, string ParticipantId)
 
 public sealed record RoomStateEnvelope(RoomStateDto State);
 public sealed record ErrorEnvelope(string Message);
+public sealed record CinemaFruitEffect(string ParticipantId, string Fruit);
+public sealed record CinemaLogoActivatedEnvelope(CinemaFruitEffect? FruitEffect);

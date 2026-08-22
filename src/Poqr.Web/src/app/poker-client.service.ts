@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { Subject } from 'rxjs';
-import { ErrorEnvelope, RoomState, SessionJoinResponse } from './poker.types';
+import { CinemaLogoActivatedEnvelope, ErrorEnvelope, RoomState, SessionJoinResponse } from './poker.types';
 
 @Injectable({ providedIn: 'root' })
 export class PokerClientService {
@@ -14,7 +14,7 @@ export class PokerClientService {
   readonly state$ = new Subject<RoomState>();
   readonly error$ = new Subject<string>();
   readonly sessionClosed$ = new Subject<string>();
-  readonly cinemaLogoActivated$ = new Subject<void>();
+  readonly cinemaLogoActivated$ = new Subject<CinemaLogoActivatedEnvelope>();
 
   constructor(private readonly http: HttpClient) {
     const { hostname, port, origin } = window.location;
@@ -58,8 +58,8 @@ export class PokerClientService {
         this.sessionClosed$.next(envelope.message);
       });
 
-      this.hub.on('CinemaLogoActivated', () => {
-        this.notifyCinemaLogoActivated();
+      this.hub.on('CinemaLogoActivated', (envelope: CinemaLogoActivatedEnvelope) => {
+        this.notifyCinemaLogoActivated(envelope);
       });
 
       this.hub.onreconnected(async () => {
@@ -111,7 +111,7 @@ export class PokerClientService {
     });
   }
 
-  private notifyCinemaLogoActivated(): void {
-    this.cinemaLogoActivated$.next();
+  private notifyCinemaLogoActivated(envelope: CinemaLogoActivatedEnvelope): void {
+    this.cinemaLogoActivated$.next(envelope);
   }
 }

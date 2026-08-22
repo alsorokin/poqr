@@ -48,12 +48,26 @@ in-room animation.
 session or participant identifiers. It will resolve the caller from its existing
 `ConnectionMap`; an absent or stale mapping is rejected without a group
 broadcast. A valid call sends `CinemaLogoActivated` to the caller's session
-group. The event has no payload because the recipient needs only a trigger.
+group.
+
+For an unrevealed round, `PokerHub` uses the current `RoomStore` state to select
+one participant outside `VotedParticipantIds` and one fruit from a fixed emoji
+list. It includes those values in an optional event payload so every recipient
+animates the same fruit toward the same participant. Each recipient uses the
+current bounds of its in-room cinema-logo button as the local flight origin. For
+an absent/revealed round or no eligible participant, the event has no fruit
+payload. This selection is transient: it does not mutate `RoomStore` or replay
+after a reconnect.
 
 `PokerClientService` will invoke `ActivateCinemaLogo`, subscribe to
 `CinemaLogoActivated`, and expose a transient observable to `App`. `App` will
 use an incrementing animation key/state to restart its CSS animation for every
-event, including events arriving before a previous animation ends.
+event, including events arriving before a previous animation ends. When the
+event includes a fruit payload, `App` resolves the target participant row and
+the in-room cinema-logo button, renders an absolute overlay from that button,
+and replaces the fruit with an explosion before removing the overlay. If a
+client no longer has the target row or logo, it omits only the local fruit
+effect.
 
 This avoids allowing a client to name another session, avoids a `RoomStore`
 mutation for a non-business interaction, and keeps the event ephemeral.
@@ -64,11 +78,11 @@ authoritative game state.
 ### Keep contract additions minimal and synchronized
 
 The affected SignalR contract consists of hub method `ActivateCinemaLogo` and
-server event `CinemaLogoActivated`. No REST routes or C# command/envelope
-records in `Contracts/PokerContracts.cs` are required because caller identity is
-derived from the hub connection and the event has no payload. TypeScript adds
-the corresponding invocation and event observable in
-`poker-client.service.ts`; no `poker.types.ts` record is required.
+server event `CinemaLogoActivated`, whose optional fruit payload contains
+`participantId` and `fruit`. A C# event-envelope record in
+`Contracts/PokerContracts.cs` and its TypeScript equivalent in `poker.types.ts`
+keep the payload synchronized. No REST routes or client command records are
+needed because caller identity is derived from the hub connection.
 
 `PokerHub` remains authoritative for transient connection-scoped delivery.
 `RoomStore` remains authoritative for room and round business invariants and is
@@ -101,6 +115,8 @@ success and failure; ports 4200 and 5057 must be free before it begins.
   replacement so every received event visibly restarts the animation.
 - **Emoji glyphs vary by platform** → Use the existing text emoji representation
   rather than claiming pixel-identical artwork across platforms.
+- **The target row can disappear before a client renders the effect** → The client
+  skips that local overlay while preserving the shared logo animation.
 - **Browser scenarios need local server ports** → The runner checks that ports
   4200 and 5057 are available and terminates only the processes it starts.
 
