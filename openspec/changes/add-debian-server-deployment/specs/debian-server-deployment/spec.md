@@ -45,14 +45,14 @@ Interactive server administration and continuous deployment SHALL use separate S
 - **THEN** it authenticates with its dedicated SSH key and does not access the interactive administrator key
 
 ### Requirement: Compatible production origins and telemetry
-The production backend SHALL accept browser API and SignalR requests from both `https://poqr.azurewebsites.net` and `https://poqr.snay.am`. When an Application Insights connection string is configured, the Debian deployment SHALL send application telemetry to that resource.
+The production backend SHALL accept browser API and SignalR requests from both `https://poqr.azurewebsites.net` and `https://poqr.snay.me`. When an Application Insights connection string is configured, the Debian deployment SHALL send application telemetry to that resource.
 
 #### Scenario: Existing Azure origin remains compatible
 - **WHEN** a browser application is served from `https://poqr.azurewebsites.net`
 - **THEN** its API and SignalR requests are accepted by the production CORS policy
 
 #### Scenario: Debian origin is compatible
-- **WHEN** a browser application is served from `https://poqr.snay.am`
+- **WHEN** a browser application is served from `https://poqr.snay.me`
 - **THEN** its API and SignalR requests are accepted by the production CORS policy
 
 #### Scenario: Telemetry is configured

@@ -65,13 +65,13 @@ Retain the Bicep modules and Azure credentials configuration, but remove the aut
 
 ### Expand the fixed production CORS allow-list
 
-Add `https://poqr.snay.am` alongside `https://poqr.azurewebsites.net` to the production policy while retaining credentials support. The standard Debian deployment is same-origin, so CORS is normally not evaluated; the explicit list preserves compatibility during the transition.
+Add `https://poqr.snay.me` alongside `https://poqr.azurewebsites.net` to the production policy while retaining credentials support. The standard Debian deployment is same-origin, so CORS is normally not evaluated; the explicit list preserves compatibility during the transition.
 
 No REST routes, SignalR hub methods/events, C# records, or TypeScript types change. RoomStore remains the authoritative owner of in-memory room state.
 
 ## Risks / Trade-offs
 
-- [The DNS record is unavailable or incorrect] → Do not install/activate the public TLS configuration until `poqr.snay.am` resolves to the server; retain Azure while waiting and use the existing `snay.me` domain only after an explicit choice.
+- [The DNS record is unavailable or incorrect] → Do not install/activate the public TLS configuration until `poqr.snay.me` resolves to the server; defer `poqr.snay.am` until its approval completes.
 - [A deployment restarts the sole in-memory instance] → Communicate that active rooms are cleared; schedule deploys for low usage and validate health before declaring success.
 - [CI SSH key disclosure] → Use a dedicated account/key, restrictive authorized-key and sudo policy, GitHub environment protection, and immediate key rotation/revocation procedures.
 - [A bad release becomes active] → Validate locally and through Caddy after restart; retain the prior release and rollback automatically on health-check failure.
@@ -89,4 +89,4 @@ No REST routes, SignalR hub methods/events, C# records, or TypeScript types chan
 
 ## Open Questions
 
-- Confirm `poqr.snay.am` DNS approval and point its A/AAAA records before the TLS/Caddy activation step; select `snay.me` explicitly only if the preferred domain cannot be used.
+- Point `poqr.snay.me` to the server before the TLS/Caddy activation step. Revisit the public hostname when `poqr.snay.am` approval completes.
