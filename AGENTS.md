@@ -92,9 +92,8 @@ Test runner note:
   CI uses the `production` GitHub environment secrets `DEPLOY_HOST`,
   `DEPLOY_HOST_KEY`, and `DEPLOY_SSH_PRIVATE_KEY`. Never use or store the
   interactive private key in GitHub.
-- Install or change Caddy only after the selected public hostname resolves to
-  the server. Its configuration must proxy `/hubs/poker` with WebSocket
-  support.
+- Install or change Caddy only after `poqr.snay.me` resolves to the server.
+  Its configuration must proxy `/hubs/poker` with WebSocket support.
 - Azure infrastructure remains defined in `infra/` as Bicep. The Azure
   workflow is manual-only as a recovery path while
   `.github/workflows/deploy-debian.yml` deploys `master` to Debian.

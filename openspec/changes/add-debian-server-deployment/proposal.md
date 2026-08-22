@@ -6,7 +6,7 @@ Poqr currently deploys automatically to Azure App Service, while a freshly provi
 
 - Add a single-instance Debian server deployment path using a dedicated runtime service, Caddy reverse proxy, TLS, and versioned releases.
 - Add local and GitHub Actions deployment procedures that use separate SSH identities for administration and CI.
-- Change production CORS configuration to allow both the existing Azure hostname and `poqr.snay.am`.
+- Change production CORS configuration to allow both the existing Azure hostname and temporary public hostname `poqr.snay.me`.
 - Continue sending telemetry to the existing Application Insights resource when its connection string is supplied on the server.
 - Make Azure deployment automation manual-only while retaining the Bicep infrastructure and a reversible Azure deployment path.
 - Document server bootstrap, deployment, rollback, and operational validation.

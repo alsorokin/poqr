@@ -103,7 +103,7 @@ sudo /usr/local/sbin/poqr-rollback
 
 ### HTTPS and CI
 
-After `poqr.snay.am` resolves to the server, install Caddy, copy
+After `poqr.snay.me` resolves to the server, install Caddy, copy
 `deploy/server/Caddyfile` to `/etc/caddy/Caddyfile`, then validate and reload
 it:
 
