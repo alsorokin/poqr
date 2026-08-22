@@ -4,9 +4,9 @@ Purpose: fast onboarding for coding agents working in this repository.
 
 ## Project layout
 
-- Solution: `Poker.sln`
-- Backend API (ASP.NET Core + SignalR): `src/Poker.Api`
-- Frontend SPA (Angular): `src/Poker.Web`
+- Solution: `Poqr.sln`
+- Backend API (ASP.NET Core + SignalR): `src/Poqr.Api`
+- Frontend SPA (Angular): `src/Poqr.Web`
 - Azure IaC (Bicep): `infra/`
 
 ## Product context
@@ -18,22 +18,22 @@ Purpose: fast onboarding for coding agents working in this repository.
 ## Local dev commands
 
 - Backend:
-  - `cd src/Poker.Api`
+  - `cd src/Poqr.Api`
   - `dotnet run`
   - Expected URL: `http://localhost:5057`
 - Frontend:
-  - `cd src/Poker.Web`
+  - `cd src/Poqr.Web`
   - `npm install`
   - `npm start`
   - Expected URL: `http://localhost:4200`
 - Build checks:
-  - `dotnet build Poker.sln`
-  - `cd src/Poker.Web && npm run build`
+  - `dotnet build Poqr.sln`
+  - `cd src/Poqr.Web && npm run build`
 - Backend tests (xUnit):
-  - `cd src/Poker.Api.Tests && dotnet test`
+  - `cd src/Poqr.Api.Tests && dotnet test`
 - Frontend tests (Karma + Puppeteer headless Chromium):
-  - `cd src/Poker.Web && npm run test`
-  - `cd src/Poker.Web && npm run test:watch`
+  - `cd src/Poqr.Web && npm run test`
+  - `cd src/Poqr.Web && npm run test:watch`
 
 ## Agent workflow expectations
 
@@ -42,21 +42,21 @@ Purpose: fast onboarding for coding agents working in this repository.
   - `**/bin/**`
   - `**/obj/**`
   - `**/publish/**`
-  - `src/Poker.Api/wwwroot/**` (unless task is specifically about static publish artifacts)
+  - `src/Poqr.Api/wwwroot/**` (unless task is specifically about static publish artifacts)
 - Prefer changing source files under:
-  - `src/Poker.Api/Controllers`
-  - `src/Poker.Api/Hubs`
-  - `src/Poker.Api/Rooms`
-  - `src/Poker.Api/Contracts`
-  - `src/Poker.Web/src/app`
+  - `src/Poqr.Api/Controllers`
+  - `src/Poqr.Api/Hubs`
+  - `src/Poqr.Api/Rooms`
+  - `src/Poqr.Api/Contracts`
+  - `src/Poqr.Web/src/app`
 - Keep backend/frontend contract changes synchronized (SignalR payloads + TypeScript types).
 
 ## Testing/validation before handoff
 
-- Run backend build: `dotnet build Poker.sln`
-- Run backend tests when backend behavior changes: `cd src/Poker.Api.Tests && dotnet test`
-- Run frontend build: `cd src/Poker.Web && npm run build`
-- Run frontend tests when UI/service logic changed: `cd src/Poker.Web && npm run test`
+- Run backend build: `dotnet build Poqr.sln`
+- Run backend tests when backend behavior changes: `cd src/Poqr.Api.Tests && dotnet test`
+- Run frontend build: `cd src/Poqr.Web && npm run build`
+- Run frontend tests when UI/service logic changed: `cd src/Poqr.Web && npm run test`
 - For realtime/session behavior changes, manually verify with two browser tabs.
 
 ## Documentation sync rule
@@ -78,12 +78,12 @@ Test runner note:
 - Avoid packaging nested publish folders repeatedly.
   - Prefer publishing to a clean output directory and zipping that directory once.
   - Clean temporary artifacts after deploy when possible.
-- Keep the CI package shape aligned with manual deploys: build Angular first, publish the API to a clean directory, then copy `src/Poker.Web/dist/poker-web/browser/.` into the published `wwwroot/` before deploy.
+- Keep the CI package shape aligned with manual deploys: build Angular first, publish the API to a clean directory, then copy `src/Poqr.Web/dist/poqr-web/browser/.` into the published `wwwroot/` before deploy.
 - Deployment flow:
-  - `cd src/Poker.Web && npm run build`
-  - `dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poqr-publish`
+  - `cd src/Poqr.Web && npm run build`
+  - `dotnet publish src/Poqr.Api/Poqr.Api.csproj -c Release -o /tmp/poqr-publish`
   - Remove `/tmp/poqr-publish/publish` and `/tmp/poqr-publish/out` if they exist.
-  - Copy `src/Poker.Web/dist/poker-web/browser/.` into `/tmp/poqr-publish/wwwroot/`.
+  - Copy `src/Poqr.Web/dist/poqr-web/browser/.` into `/tmp/poqr-publish/wwwroot/`.
   - Zip `/tmp/poqr-publish` once and deploy with `az webapp deploy --name poqr --resource-group poqr-rg --type zip`.
   - Clean up `/tmp/poqr-publish` and the zip file after deploy.
 

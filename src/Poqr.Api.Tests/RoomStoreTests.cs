@@ -1,6 +1,5 @@
-using Poker.Api.Rooms;
-
-namespace Poker.Api.Tests;
+using Poqr.Api.Rooms;
+namespace Poqr.Api.Tests;
 
 public sealed class RoomStoreTests
 {

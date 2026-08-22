@@ -58,24 +58,24 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: src/Poker.Web/package-lock.json
+          cache-dependency-path: src/Poqr.Web/package-lock.json
 
       - name: Install frontend dependencies
-        working-directory: src/Poker.Web
+        working-directory: src/Poqr.Web
         run: npm ci
 
       - name: Build frontend
-        working-directory: src/Poker.Web
+        working-directory: src/Poqr.Web
         run: npm run build
 
       - name: Publish backend
-        run: dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -r linux-x64 --self-contained true -o "$RUNNER_TEMP/poqr-publish"
+        run: dotnet publish src/Poqr.Api/Poqr.Api.csproj -c Release -r linux-x64 --self-contained true -o "$RUNNER_TEMP/poqr-publish"
 
       - name: Package frontend with backend
         run: |
           rm -rf "$RUNNER_TEMP/poqr-publish/publish" "$RUNNER_TEMP/poqr-publish/out"
           rm -rf "$RUNNER_TEMP/poqr-publish/wwwroot"/*
-          cp -r src/Poker.Web/dist/poker-web/browser/. "$RUNNER_TEMP/poqr-publish/wwwroot/"
+          cp -r src/Poqr.Web/dist/poqr-web/browser/. "$RUNNER_TEMP/poqr-publish/wwwroot/"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "poker-web": {
+    "poqr-web": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "poker-web:build:production"
+              "buildTarget": "poqr-web:build:production"
             },
             "development": {
-              "buildTarget": "poker-web:build:development"
+              "buildTarget": "poqr-web:build:development"
             }
           },
           "defaultConfiguration": "development"

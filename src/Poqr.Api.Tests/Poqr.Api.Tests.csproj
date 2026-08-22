@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Poker.Api\Poker.Api.csproj" />
+    <ProjectReference Include="..\Poqr.Api\Poqr.Api.csproj" />
   </ItemGroup>
 
 </Project>

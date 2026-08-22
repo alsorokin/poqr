@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
-using Poker.Api.Contracts;
-using Poker.Api.Hubs;
-
-namespace Poker.Api.Rooms;
+using Poqr.Api.Contracts;
+using Poqr.Api.Hubs;
+namespace Poqr.Api.Rooms;
 
 public sealed class DisconnectedParticipantCleanupService(
     RoomStore roomStore,

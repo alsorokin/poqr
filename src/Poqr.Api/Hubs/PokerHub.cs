@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
-using Poker.Api.Contracts;
-using Poker.Api.Rooms;
-
-namespace Poker.Api.Hubs;
+using Poqr.Api.Contracts;
+using Poqr.Api.Rooms;
+namespace Poqr.Api.Hubs;
 
 public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hub
 {

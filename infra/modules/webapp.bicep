@@ -50,7 +50,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|10.0'
       // Self-contained publish produces a native executable
-      appCommandLine: './Poker.Api'
+      appCommandLine: './Poqr.Api'
       // WebSockets are required for SignalR
       webSocketsEnabled: true
       alwaysOn: false

@@ -3,9 +3,9 @@ githubCopilot:
   cloudAgent: false
 
 context: |
-  Planning Poker is an anonymous, real-time web application.
-  Backend: ASP.NET Core .NET 10 API with SignalR in src/Poker.Api.
-  Frontend: Angular 20 SPA in src/Poker.Web.
+  Poqr is an anonymous, real-time planning poker web application.
+  Backend: ASP.NET Core .NET 10 API with SignalR in src/Poqr.Api.
+  Frontend: Angular 20 SPA in src/Poqr.Web.
   Azure infrastructure: Bicep in infra/; deploys to a single App Service instance.
 
   Room/session state is intentionally in memory and ephemeral. Do not introduce
@@ -17,9 +17,9 @@ context: |
   broadcasts state. Contract changes must keep C# records in Contracts/
   synchronized with TypeScript types and SignalR handlers in src/app/.
 
-  Backend tests use xUnit in src/Poker.Api.Tests. Frontend tests use
-  Karma/Puppeteer in src/Poker.Web. Do not edit generated output in bin/, obj/,
-  publish/, or src/Poker.Api/wwwroot/.
+  Backend tests use xUnit in src/Poqr.Api.Tests. Frontend tests use
+  Karma/Puppeteer in src/Poqr.Web. Do not edit generated output in bin/, obj/,
+  publish/, or src/Poqr.Api/wwwroot/.
 
 rules:
   proposal:

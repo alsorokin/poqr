@@ -1,11 +1,11 @@
-# Planning Poker (Angular + .NET)
+# Poqr (Angular + .NET)
 
 First implementation slice of an anonymous planning poker app.
 
 ## Stack
 
-- Frontend: Angular SPA (`src/Poker.Web`)
-- Backend: ASP.NET Core + SignalR (`src/Poker.Api`)
+- Frontend: Angular SPA (`src/Poqr.Web`)
+- Backend: ASP.NET Core + SignalR (`src/Poqr.Api`)
 - State: in-memory room store
 - Card deck: Fibonacci capped at 21 plus `Joker` (`1, 2, 3, 5, 8, 13, 21, Joker`)
 
@@ -29,7 +29,7 @@ First implementation slice of an anonymous planning poker app.
 ### 1) Backend
 
 ```bash
-cd src/Poker.Api
+cd src/Poqr.Api
 dotnet run
 ```
 
@@ -38,7 +38,7 @@ Backend listens on `http://localhost:5057`.
 ### 2) Frontend
 
 ```bash
-cd src/Poker.Web
+cd src/Poqr.Web
 npm install
 npm start
 ```
@@ -50,8 +50,8 @@ Open it in multiple tabs/browsers to simulate participants.
 ## Build checks
 
 ```bash
-dotnet build Poker.sln
-cd src/Poker.Web && npm run build
+dotnet build Poqr.sln
+cd src/Poqr.Web && npm run build
 ```
 
 ## Azure infrastructure (Bicep / IaC)
@@ -111,14 +111,14 @@ The workflow (`.github/workflows/master_poqr.yml`) has three jobs on every push 
 ### Deploy to Azure App Service manually
 
 ```bash
-cd src/Poker.Web
+cd src/Poqr.Web
 npm run build
 
 rm -rf /tmp/poqr-publish
-dotnet publish src/Poker.Api/Poker.Api.csproj -c Release -o /tmp/poqr-publish
+dotnet publish src/Poqr.Api/Poqr.Api.csproj -c Release -o /tmp/poqr-publish
 rm -rf /tmp/poqr-publish/publish /tmp/poqr-publish/out
 rm -rf /tmp/poqr-publish/wwwroot/*
-cp -r src/Poker.Web/dist/poker-web/browser/. /tmp/poqr-publish/wwwroot/
+cp -r src/Poqr.Web/dist/poqr-web/browser/. /tmp/poqr-publish/wwwroot/
 
 cd /tmp/poqr-publish
 zip -r /tmp/poqr-deploy.zip .
@@ -133,12 +133,12 @@ Frontend unit tests use Karma with Puppeteer-managed headless Chromium, so a sys
 Backend unit tests use xUnit and cover core room/session lifecycle behavior in `RoomStore`.
 
 ```bash
-cd src/Poker.Web
+cd src/Poqr.Web
 npm run test
 ```
 
 ```bash
-cd src/Poker.Api.Tests
+cd src/Poqr.Api.Tests
 dotnet test
 ```
 
