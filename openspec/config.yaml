@@ -2,33 +2,48 @@ schema: spec-driven
 githubCopilot:
   cloudAgent: false
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Planning Poker is an anonymous, real-time web application.
+  Backend: ASP.NET Core .NET 10 API with SignalR in src/Poker.Api.
+  Frontend: Angular 20 SPA in src/Poker.Web.
+  Azure infrastructure: Bicep in infra/; deploys to a single App Service instance.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Room/session state is intentionally in memory and ephemeral. Do not introduce
+  persistence, authentication, or scale-out behavior unless the change explicitly
+  requires it. The card deck is 1, 2, 3, 5, 8, 13, 21, Joker.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  RoomStore owns room and round business invariants. HTTP controllers create,
+  join, and retrieve sessions; PokerHub performs real-time mutations and
+  broadcasts state. Contract changes must keep C# records in Contracts/
+  synchronized with TypeScript types and SignalR handlers in src/app/.
+
+  Backend tests use xUnit in src/Poker.Api.Tests. Frontend tests use
+  Karma/Puppeteer in src/Poker.Web. Do not edit generated output in bin/, obj/,
+  publish/, or src/Poker.Api/wwwroot/.
+
+rules:
+  proposal:
+    - State whether the change affects frontend, backend, shared contracts, infrastructure, or documentation.
+    - List intentional non-goals when a request could imply persistence, authentication, or multi-instance support.
+  specs:
+    - Write observable requirements with SHALL statements and WHEN/THEN scenarios.
+    - Specify real-time behavior, disconnect/reconnect behavior, and invalid or stale client commands when relevant.
+    - Preserve anonymous access and ephemeral room lifecycle unless explicitly changed.
+  design:
+    - Identify the authoritative owner of each business rule; RoomStore remains authoritative for room state.
+    - For contract changes, name the REST routes, SignalR hub methods/events, C# records, and TypeScript types affected.
+    - For deployment changes, describe the Bicep and GitHub Actions impact and preserve WebSocket support.
+  tasks:
+    - Separate backend, frontend, contract, infrastructure, documentation, and validation work when applicable.
+    - Include xUnit tests for RoomStore behavior changes and Angular tests for UI or client-service behavior changes.
+    - Include two-browser-tab verification for SignalR, reconnect, membership, or round-state changes.
+
+operations:
+  apply:
+    guidance:
+      - Keep C# and TypeScript contract changes synchronized in the same implementation.
+      - Use targeted tests first, then run the relevant build checks.
+      - Update README.md when commands, test scripts, project layout, or deployment behavior changes.
+  archive:
+    guidance:
+      - Confirm implementation and specs agree on anonymous access, in-memory state, and real-time lifecycle behavior.
