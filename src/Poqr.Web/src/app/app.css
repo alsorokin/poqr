@@ -181,10 +181,57 @@ button.ghost {
 }
 
 .room-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: 1rem;
+}
+
+.room-session {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.room-session h2 {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.copy-session-link {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  padding: 0.1rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  line-height: 1;
+  place-items: center;
+}
+
+.copy-session-link svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.copy-session-link:hover {
+  background: #f0f4ff;
+  color: #2854d7;
+}
+
+.copy-session-link:focus-visible {
+  outline: 2px solid #2854d7;
+  outline-offset: 2px;
 }
 
 .room-grid {
@@ -262,6 +309,12 @@ li.participant-disconnected {
 .cards button.selected {
   background: #2954d8;
   color: #fff;
+}
+
+.cards .joker-card {
+  padding-inline: 0.25rem;
+  font-size: clamp(0.625rem, 4vw, 0.9rem);
+  white-space: nowrap;
 }
 
 .error {
@@ -349,8 +402,23 @@ li.participant-disconnected {
 
 @media (max-width: 560px) {
   .room-header {
-    align-items: center;
-    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .room-logo-wordmark {
+    display: none;
+  }
+
+  .room-session h2 {
+    font-size: 0.9rem;
+  }
+
+  .room-header .ghost {
+    height: 2.1rem;
+  }
+
+  .room-header .ghost {
+    padding-inline: 0.5rem;
   }
 
   .entry-row {
@@ -369,6 +437,12 @@ li.participant-disconnected {
   .entry-row input {
     height: 2.5rem;
     min-height: 2.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

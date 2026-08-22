@@ -176,14 +176,27 @@ export class App implements OnInit, OnDestroy {
     await this.pokerClient.activateCinemaLogo();
   }
 
-  async leave(): Promise<void> {
+  async copyShareLink(): Promise<void> {
+    this.error = '';
+
+    try {
+      await navigator.clipboard.writeText(this.shareLink);
+    } catch {
+      this.error = 'Unable to copy the session link.';
+    }
+  }
+
+  leave(): void {
     if (!this.sessionId || !this.participantId) {
       this.resetRoom();
       return;
     }
 
-    await this.pokerClient.leaveSession(this.sessionId, this.participantId);
+    const leaveRequest = this.pokerClient.leaveSession(this.sessionId, this.participantId);
     this.resetRoom();
+    void leaveRequest.catch((error: unknown) => {
+      console.error('Unable to leave the session.', error);
+    });
   }
 
   hasVoted(participantId: string): boolean {
