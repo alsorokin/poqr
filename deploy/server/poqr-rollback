@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  echo "This command must run as root." >&2
+  exit 1
+fi
+
+base_dir="/srv/poqr"
+current_link="$base_dir/current"
+previous_link="$base_dir/previous"
+
+if [[ ! -L "$previous_link" ]]; then
+  echo "No previous release is available for rollback." >&2
+  exit 1
+fi
+
+previous_target="$(readlink -f "$previous_link")"
+current_target="$(readlink -f "$current_link")"
+
+if [[ ! -d "$previous_target" || ! -x "$previous_target/Poqr.Api" ]]; then
+  echo "Previous release is invalid: $previous_target" >&2
+  exit 1
+fi
+
+ln -sTfn "$previous_target" "$current_link"
+ln -sTfn "$current_target" "$previous_link"
+echo "Restarting Poqr. Active in-memory rooms will be cleared."
+systemctl restart poqr.service
+
+for _ in {1..20}; do
+  if curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/status >/dev/null; then
+    printf 'Rolled back to: %s\n' "$(basename "$previous_target")"
+    exit 0
+  fi
+
+  sleep 1
+done
+
+echo "Poqr did not become healthy after rollback." >&2
+exit 1

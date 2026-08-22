@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  echo "This command must run as root." >&2
+  exit 1
+fi
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 <release-id>" >&2
+  exit 64
+fi
+
+release_id="$1"
+if [[ ! "$release_id" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Release ID may contain only letters, numbers, dots, underscores, and hyphens." >&2
+  exit 64
+fi
+
+base_dir="/srv/poqr"
+archive_path="$base_dir/incoming/$release_id.tar.gz"
+release_dir="$base_dir/releases/$release_id"
+current_link="$base_dir/current"
+previous_link="$base_dir/previous"
+
+if [[ ! -f "$archive_path" ]]; then
+  echo "Release archive not found: $archive_path" >&2
+  exit 1
+fi
+
+if [[ -e "$release_dir" ]]; then
+  echo "Release already exists: $release_dir" >&2
+  exit 1
+fi
+
+if tar -tzf "$archive_path" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+  echo "Release archive contains unsafe paths." >&2
+  exit 1
+fi
+
+previous_target=""
+if [[ -L "$current_link" ]]; then
+  previous_target="$(readlink -f "$current_link")"
+fi
+
+mkdir "$release_dir"
+tar --no-same-owner -C "$release_dir" -xzf "$archive_path"
+chown -R root:poqr "$release_dir"
+chmod -R g=rX,o= "$release_dir"
+
+if [[ ! -x "$release_dir/Poqr.Api" ]]; then
+  echo "Release does not contain an executable Poqr.Api." >&2
+  exit 1
+fi
+
+if [[ -n "$previous_target" ]]; then
+  ln -sTfn "$previous_target" "$previous_link"
+fi
+
+ln -sTfn "$release_dir" "$current_link"
+echo "Restarting Poqr. Active in-memory rooms will be cleared."
+
+restore_previous_release() {
+  if [[ -z "$previous_target" ]]; then
+    echo "No previous release is available to restore." >&2
+    return
+  fi
+
+  ln -sTfn "$previous_target" "$current_link"
+  systemctl restart poqr.service
+}
+
+wait_for_healthy_service() {
+  for _ in {1..20}; do
+    if curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/status >/dev/null; then
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  return 1
+}
+
+if ! systemctl restart poqr.service; then
+  echo "Poqr failed to start; restoring the previous release." >&2
+  restore_previous_release
+  exit 1
+fi
+
+if ! wait_for_healthy_service; then
+  echo "Poqr health check failed; restoring the previous release." >&2
+  restore_previous_release
+  exit 1
+fi
+
+printf 'Activated release: %s\n' "$release_id"

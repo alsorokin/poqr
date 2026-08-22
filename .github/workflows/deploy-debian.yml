@@ -1,0 +1,68 @@
+name: Build and deploy Poqr to Debian
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: poqr-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: src/Poqr.Web/package-lock.json
+
+      - name: Configure deployment SSH credentials
+        env:
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519_poqr_ci
+          chmod 600 ~/.ssh/id_ed25519_poqr_ci
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Package release
+        env:
+          RELEASE_ID: ${{ github.sha }}
+          RELEASE_OUTPUT: ${{ runner.temp }}/poqr-release-${{ github.sha }}
+        run: ./deploy/package-release.sh "$RELEASE_ID" "$RELEASE_OUTPUT"
+
+      - name: Upload and activate release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          RELEASE_ID: ${{ github.sha }}
+          RELEASE_OUTPUT: ${{ runner.temp }}/poqr-release-${{ github.sha }}
+        run: |
+          archive="$RELEASE_OUTPUT/$RELEASE_ID.tar.gz"
+          ssh_options=(
+            -i ~/.ssh/id_ed25519_poqr_ci
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes
+            -o User=ci-deploy
+          )
+          scp "${ssh_options[@]}" "$archive" "$DEPLOY_HOST:/srv/poqr/incoming/$RELEASE_ID.tar.gz"
+          ssh "${ssh_options[@]}" "$DEPLOY_HOST" \
+            "sudo -n /usr/local/sbin/poqr-activate $RELEASE_ID"

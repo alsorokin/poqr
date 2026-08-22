@@ -1,0 +1,2 @@
+Cmnd_Alias POQR_DEPLOY = /usr/local/sbin/poqr-activate *
+ci-deploy ALL=(root) NOPASSWD: POQR_DEPLOY

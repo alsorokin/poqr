@@ -54,6 +54,77 @@ dotnet build Poqr.sln
 cd src/Poqr.Web && npm run build
 ```
 
+## Debian deployment
+
+Poqr runs as one self-contained .NET process under systemd. Restarting the
+service clears active rooms because room state is intentionally in memory.
+
+### Server prerequisites
+
+The host requires a `poqr` runtime user, a restricted `ci-deploy` SSH user,
+`/srv/poqr/{incoming,releases}`, and the system ICU package:
+
+```bash
+sudo apt update
+sudo apt install -y libicu-dev
+```
+
+Install `deploy/server/poqr.service`, `poqr-activate`, `poqr-rollback`, and
+`ci-deploy.sudoers` with root ownership. Store
+`APPLICATIONINSIGHTS_CONNECTION_STRING` in `/etc/poqr/poqr.env`, owned by
+`root:root` with mode `0600`; never commit it.
+
+`ci-deploy` uses its own no-passphrase CI key. Its key entry uses the SSH
+`restrict` option and its only passwordless sudo command is
+`/usr/local/sbin/poqr-activate`.
+
+### Local release and rollback
+
+Create a unique release ID and output directory:
+
+```bash
+./deploy/package-release.sh <release-id> /tmp/poqr-release-<release-id>
+```
+
+Upload the resulting `<release-id>.tar.gz` to
+`/srv/poqr/incoming/` as `ci-deploy`, then activate it:
+
+```bash
+sudo /usr/local/sbin/poqr-activate <release-id>
+```
+
+The activation command waits for `http://127.0.0.1:8080/api/status`. It keeps
+the preceding release as `previous` and restores it automatically if the new
+release does not become healthy. To switch back manually:
+
+```bash
+sudo /usr/local/sbin/poqr-rollback
+```
+
+### HTTPS and CI
+
+After `poqr.snay.am` resolves to the server, install Caddy, copy
+`deploy/server/Caddyfile` to `/etc/caddy/Caddyfile`, then validate and reload
+it:
+
+```bash
+sudo apt install -y caddy
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Caddy redirects HTTP to HTTPS, provisions the certificate, and proxies the SPA,
+API, and SignalR WebSocket hub to `127.0.0.1:8080`.
+
+The `.github/workflows/deploy-debian.yml` workflow deploys pushes to `master`.
+Configure these GitHub environment secrets for `production` before merging it:
+
+| Secret | Value |
+|---|---|
+| `DEPLOY_HOST` | Debian server hostname or IP address |
+| `DEPLOY_HOST_KEY` | Pinned `known_hosts` line for the server |
+| `DEPLOY_SSH_PRIVATE_KEY` | Contents of the dedicated `ci-deploy` private key |
+
 ## Azure infrastructure (Bicep / IaC)
 
 All Azure resources are defined in `infra/`:
@@ -102,7 +173,9 @@ The service principal must have **Contributor** role at subscription scope so it
 
 ### CI/CD workflow
 
-The workflow (`.github/workflows/master_poqr.yml`) has three jobs on every push to `master`:
+The Azure workflow (`.github/workflows/master_poqr.yml`) is manual-only while
+the Debian deployment is active. It retains the existing three jobs for a
+deliberate Azure recovery deployment:
 
 1. **infra** — deploys Bicep (idempotent; creates/updates Azure resources)
 2. **build** — builds frontend + backend, uploads artifact *(runs in parallel with infra)*

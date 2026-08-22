@@ -1,0 +1,22 @@
+[Unit]
+Description=Poqr planning poker application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=poqr
+Group=poqr
+WorkingDirectory=/srv/poqr/current
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=PORT=8080
+EnvironmentFile=-/etc/poqr/poqr.env
+ExecStart=/srv/poqr/current/Poqr.Api
+Restart=on-failure
+RestartSec=5s
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
