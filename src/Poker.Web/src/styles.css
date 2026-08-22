@@ -1,1 +1,18 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  app-root .entry-row input {
+    height: 2.5rem;
+    min-height: 2.5rem;
+  }
+}
