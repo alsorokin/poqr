@@ -15,7 +15,7 @@
 ## 3. Application configuration
 
 - [x] 3.1 Add `https://poqr.snay.me` to the production CORS allow-list while retaining `https://poqr.azurewebsites.net` and credential support; verify `dotnet build Poqr.sln` succeeds and browser-origin requests from both allowed origins pass preflight/credential checks.
-- [ ] 3.2 Configure `APPLICATIONINSIGHTS_CONNECTION_STRING` only through the protected server environment file; verify the service starts with and without the setting and that configured telemetry appears in the existing Application Insights resource.
+- [x] 3.2 Configure `APPLICATIONINSIGHTS_CONNECTION_STRING` only through the protected server environment file; verify the service starts with and without the setting and that configured telemetry appears in the existing Application Insights resource.
 
 ## 4. Continuous deployment automation
 
@@ -27,4 +27,4 @@
 
 - [x] 5.1 Update README.md and AGENTS.md with the Debian bootstrap, domain/DNS prerequisite, local deploy, CI deploy, rollback, telemetry, and manual Azure recovery procedures; verify commands and artifact locations match the implemented scripts and workflows.
 - [x] 5.2 Run `dotnet build Poqr.sln`, `cd src/Poqr.Api.Tests && dotnet test`, `cd src/Poqr.Web && npm run build`, and `cd src/Poqr.Web && npm run test`; verify all relevant checks pass.
-- [ ] 5.3 Verify the public HTTPS endpoint in two browser tabs, including room updates and a temporary reconnect through `/hubs/poker`; verify the configured public hostname, HTTP redirect, SPA route fallback, API status, and SignalR WebSocket behavior all work.
+- [x] 5.3 Verify the public HTTPS endpoint in two browser tabs, including room updates and a temporary reconnect through `/hubs/poker`; verify the configured public hostname, HTTP redirect, SPA route fallback, API status, and SignalR WebSocket behavior all work.
