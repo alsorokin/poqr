@@ -176,6 +176,16 @@ export class App implements OnInit, OnDestroy {
     await this.pokerClient.activateCinemaLogo();
   }
 
+  async copyShareLink(): Promise<void> {
+    this.error = '';
+
+    try {
+      await navigator.clipboard.writeText(this.shareLink);
+    } catch {
+      this.error = 'Unable to copy the session link.';
+    }
+  }
+
   async leave(): Promise<void> {
     if (!this.sessionId || !this.participantId) {
       this.resetRoom();

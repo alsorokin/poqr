@@ -45,9 +45,14 @@
           </span>
         </ng-container>
       </button>
-      <div>
+      <div class="room-session">
         <h2>Session {{ roomState.sessionId }}</h2>
-        <p>Share link: <a [href]="shareLink">{{ shareLink }}</a></p>
+        <button class="copy-session-link" (click)="copyShareLink()" aria-label="Copy session link">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="8" y="8" width="11" height="11" rx="1"></rect>
+            <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path>
+          </svg>
+        </button>
       </div>
       <button class="ghost" (click)="leave()">Leave</button>
     </header>
@@ -82,6 +87,7 @@
           <button
             *ngFor="let card of roomState.cardValues"
             [class.selected]="isSelected(card)"
+            [class.joker-card]="card === 'Joker'"
             (click)="vote(card)">
             {{ cardLabel(card) }}
           </button>

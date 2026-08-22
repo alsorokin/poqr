@@ -258,6 +258,40 @@ describe('App', () => {
     expect(app.revealedVote('p2')).toBe('—');
   });
 
+  it('renders an accessible compact session header and copies its canonical share link', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.roomState = buildRoomState();
+    const writeText = spyOn(navigator.clipboard, 'writeText').and.resolveTo();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const sessionHeader = compiled.querySelector<HTMLElement>('.room-session');
+    const copyButton = compiled.querySelector<HTMLButtonElement>('.copy-session-link');
+
+    expect(sessionHeader?.querySelector('h2')?.textContent).toContain('Session ABC123');
+    expect(copyButton?.getAttribute('aria-label')).toBe('Copy session link');
+    expect(copyButton?.querySelector('svg')).not.toBeNull();
+    expect(compiled.querySelector('.room-header a')).toBeNull();
+
+    copyButton?.click();
+    await fixture.whenStable();
+
+    expect(writeText).toHaveBeenCalledWith(app.shareLink);
+  });
+
+  it('marks the Joker vote card as an unwrapped label', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.roomState = buildRoomState();
+    fixture.detectChanges();
+
+    const jokerCard = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.cards .joker-card');
+    expect(jokerCard?.textContent).toContain('✋🗿🤚');
+  });
+
   it('resets room when session closed event is received', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
