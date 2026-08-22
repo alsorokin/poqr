@@ -79,6 +79,38 @@ describe('App', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Planning Poker');
   });
 
+  it('renders mirrored accessible create and join session paths with their existing disabled states', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const createButton = compiled.querySelector<HTMLButtonElement>('.create-path button');
+    const joinButton = compiled.querySelector<HTMLButtonElement>('.join-path button');
+    const participantNameInput = compiled.querySelector<HTMLInputElement>('#participant-name');
+    const sessionCodeInput = compiled.querySelector<HTMLInputElement>('#session-code');
+
+    expect(compiled.querySelector('.session-entry')).not.toBeNull();
+    expect(compiled.querySelector('.session-divider')?.textContent).toContain('or join an existing session');
+    expect(compiled.querySelector('.create-path h2')?.textContent).toContain('Start a new session');
+    expect(compiled.querySelector('.join-path h2')?.textContent).toContain('Join an existing session');
+    expect(createButton?.textContent).toContain('Create');
+    expect(joinButton?.textContent).toContain('Join');
+    expect(participantNameInput?.placeholder).toBe('Your name');
+    expect(sessionCodeInput?.placeholder).toBe('Session code');
+    expect(compiled.querySelector('label[for="participant-name"]')?.classList).toContain('visually-hidden');
+    expect(compiled.querySelector('label[for="session-code"]')?.classList).toContain('visually-hidden');
+    expect(createButton?.disabled).toBeTrue();
+    expect(joinButton?.disabled).toBeTrue();
+
+    app.participantName = 'Alice';
+    app.sessionInput = 'ABC123';
+    fixture.detectChanges();
+
+    expect(createButton?.disabled).toBeFalse();
+    expect(joinButton?.disabled).toBeFalse();
+  });
+
   it('reads session query parameter on init', () => {
     window.history.replaceState({}, '', '/?session=abc123');
     const fixture = TestBed.createComponent(App);

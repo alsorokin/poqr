@@ -1,25 +1,28 @@
 <main class="page">
-  <section class="panel" *ngIf="!sessionId">
+  <section class="panel landing-panel" *ngIf="!sessionId">
     <h1>Planning Poker</h1>
     <p class="subtitle">Anonymous sessions, quick voting, reveal anytime.</p>
 
-    <label>
-      Your name
-      <input [(ngModel)]="participantName" placeholder="Team member" />
-    </label>
+    <div class="session-entry">
+      <div class="entry-path create-path">
+        <h2>Start a new session</h2>
+        <div class="entry-row">
+          <button (click)="createSession()" [disabled]="!participantName.trim()">Create</button>
+          <label class="visually-hidden" for="participant-name">Your name</label>
+          <input id="participant-name" [(ngModel)]="participantName" placeholder="Your name" />
+        </div>
+      </div>
 
-    <div class="actions-row">
-      <button (click)="createSession()" [disabled]="!participantName.trim()">Create session</button>
-    </div>
+      <div class="session-divider" aria-hidden="true">or join an existing session</div>
 
-    <div class="join-row">
-      <label>
-        Session code
-        <input [(ngModel)]="sessionInput" placeholder="ABC123" />
-      </label>
-      <button (click)="joinSession()" [disabled]="!participantName.trim() || !sessionInput.trim()">
-        Join session
-      </button>
+      <div class="entry-path join-path">
+        <h2>Join an existing session</h2>
+        <div class="entry-row">
+          <label class="visually-hidden" for="session-code">Session code</label>
+          <input id="session-code" [(ngModel)]="sessionInput" placeholder="Session code" />
+          <button (click)="joinSession()" [disabled]="!participantName.trim() || !sessionInput.trim()">Join</button>
+        </div>
+      </div>
     </div>
 
     <p class="error" *ngIf="error">{{ error }}</p>
