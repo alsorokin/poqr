@@ -314,7 +314,7 @@ describe('App', () => {
     expect(app.cinemaLogoAnimationKey).toBe(2);
   });
 
-  it('shows a fruit effect for an eligible target and removes it after the explosion', () => {
+  it('keeps overlapping fruit effects independent through their explosions and cleanup', () => {
     jasmine.clock().install();
 
     try {
@@ -335,23 +335,53 @@ describe('App', () => {
       });
       fixture.detectChanges();
 
-      expect(app.cinemaFruitEffect?.participantId).toBe('p2');
-      expect(app.cinemaFruitStartX).toBe('40px');
-      expect(app.cinemaFruitStartY).toBe('55px');
-      expect(app.cinemaFruitTargetX).toBe('130px');
-      expect(app.cinemaFruitTargetY).toBe('155px');
+      expect(app.cinemaFruitEffects.length).toBe(1);
+      expect(app.cinemaFruitEffects[0].fruitEffect.participantId).toBe('p2');
+      expect(app.cinemaFruitEffects[0].startX).toBe('40px');
+      expect(app.cinemaFruitEffects[0].startY).toBe('55px');
+      expect(app.cinemaFruitEffects[0].targetX).toBe('130px');
+      expect(app.cinemaFruitEffects[0].targetY).toBe('155px');
       expect(fixture.nativeElement.querySelector('.cinema-fruit-effect')?.textContent).toContain('🍓');
+
+      jasmine.clock().tick(300);
+      pokerClient.cinemaLogoActivated$.next({
+        fruitEffect: { participantId: 'p2', fruit: '🍌' }
+      });
+      fixture.detectChanges();
+      expect(app.cinemaFruitEffects.length).toBe(2);
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[0]?.textContent).toContain('🍓');
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[1]?.textContent).toContain('🍌');
+
+      jasmine.clock().tick(350);
+      fixture.detectChanges();
+      expect(app.cinemaFruitEffects[0].isExploding).toBeTrue();
+      expect(app.cinemaFruitEffects[1].isExploding).toBeFalse();
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[0]?.textContent).toContain('💥');
+      expect(fixture.nativeElement.querySelectorAll('.cinema-fruit-effect')[1]?.textContent).toContain('🍌');
 
       jasmine.clock().tick(650);
       fixture.detectChanges();
-      expect(app.cinemaFruitEffectIsExploding).toBeTrue();
-      expect(fixture.nativeElement.querySelector('.cinema-fruit-effect')?.textContent).toContain('💥');
-
-      jasmine.clock().tick(350);
-      expect(app.cinemaFruitEffect).toBeNull();
+      expect(app.cinemaFruitEffects).toEqual([]);
     } finally {
       jasmine.clock().uninstall();
     }
+  });
+
+  it('clears active fruit effects when the component is destroyed', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.participantId = 'p1';
+    app.roomState = buildRoomState();
+    fixture.detectChanges();
+
+    pokerClient.cinemaLogoActivated$.next({
+      fruitEffect: { participantId: 'p2', fruit: '🍓' }
+    });
+    expect(app.cinemaFruitEffects.length).toBe(1);
+
+    fixture.destroy();
+    expect(app.cinemaFruitEffects).toEqual([]);
   });
 
   it('locks starting a new vote for 5 seconds right after reveal', async () => {

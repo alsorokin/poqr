@@ -63,6 +63,13 @@ async function expectFruitStartsAtLogo(page) {
   }
 }
 
+async function expectConcurrentFruitEffects(page) {
+  await page.waitForFunction(
+    () => document.querySelectorAll('.cinema-fruit-effect[data-fruit-id]').length === 2,
+    { timeout: 10000 }
+  );
+}
+
 export async function run({ browser, frontendUrl, clickWithCdp }) {
   const first = await createOrJoinSession(browser, frontendUrl, 'Alice');
   const sessionId = new URL(first.url()).searchParams.get('session');
@@ -81,17 +88,19 @@ export async function run({ browser, frontendUrl, clickWithCdp }) {
   await expectLogoActivation(clickWithCdp, first, second, 3);
   await second.waitForSelector('.cinema-fruit-effect[data-fruit-target]');
   await expectFruitStartsAtLogo(second);
+  await expectLogoActivation(clickWithCdp, first, second, 4);
+  await expectConcurrentFruitEffects(second);
 
   await second.waitForSelector('.cinema-fruit-effect', { hidden: true });
   await clickWithCdp(first, '.cards button');
   await clickWithCdp(second, '.cards button');
   await wait(250);
-  await expectLogoActivation(clickWithCdp, first, second, 4);
+  await expectLogoActivation(clickWithCdp, first, second, 5);
   await expectNoFruitEffect(second);
 
   await clickWithCdp(first, '.actions-row button');
   await first.waitForSelector('.voting p strong');
-  await expectLogoActivation(clickWithCdp, first, second, 5);
+  await expectLogoActivation(clickWithCdp, first, second, 6);
   await expectNoFruitEffect(second);
 
   await second.reload({ waitUntil: 'domcontentloaded' });

@@ -106,16 +106,17 @@
   </section>
 
   <div
-    *ngIf="cinemaFruitEffect as effect"
+    *ngFor="let effect of cinemaFruitEffects"
     class="cinema-fruit-effect"
-    [class.cinema-fruit-effect--exploding]="cinemaFruitEffectIsExploding"
-    [attr.data-fruit-target]="effect.participantId"
-    [style.--fruit-start-x]="cinemaFruitStartX"
-    [style.--fruit-start-y]="cinemaFruitStartY"
-    [style.--fruit-target-x]="cinemaFruitTargetX"
-    [style.--fruit-target-y]="cinemaFruitTargetY"
+    [class.cinema-fruit-effect--exploding]="effect.isExploding"
+    [attr.data-fruit-id]="effect.id"
+    [attr.data-fruit-target]="effect.fruitEffect.participantId"
+    [style.--fruit-start-x]="effect.startX"
+    [style.--fruit-start-y]="effect.startY"
+    [style.--fruit-target-x]="effect.targetX"
+    [style.--fruit-target-y]="effect.targetY"
     aria-hidden="true">
-    <span *ngIf="!cinemaFruitEffectIsExploding">{{ effect.fruit }}</span>
-    <span *ngIf="cinemaFruitEffectIsExploding">💥</span>
+    <span *ngIf="!effect.isExploding">{{ effect.fruitEffect.fruit }}</span>
+    <span *ngIf="effect.isExploding">💥</span>
   </div>
 </main>

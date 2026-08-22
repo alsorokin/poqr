@@ -5,6 +5,18 @@ import { Subscription } from 'rxjs';
 import { PokerClientService } from './poker-client.service';
 import { CinemaFruitEffect, CinemaLogoActivatedEnvelope, RoomState, SessionJoinResponse } from './poker.types';
 
+interface CinemaFruitEffectInstance {
+  id: number;
+  fruitEffect: CinemaFruitEffect;
+  isExploding: boolean;
+  startX: string;
+  startY: string;
+  targetX: string;
+  targetY: string;
+  explosionTimeout: ReturnType<typeof setTimeout> | null;
+  cleanupTimeout: ReturnType<typeof setTimeout> | null;
+}
+
 @Component({
   selector: 'app-root',
   imports: [CommonModule, FormsModule],
@@ -24,20 +36,14 @@ export class App implements OnInit, OnDestroy {
   roomState: RoomState | null = null;
   error = '';
   cinemaLogoAnimationKey = 0;
-  cinemaFruitEffect: CinemaFruitEffect | null = null;
-  cinemaFruitEffectIsExploding = false;
-  cinemaFruitStartX = '0px';
-  cinemaFruitStartY = '0px';
-  cinemaFruitTargetX = '0px';
-  cinemaFruitTargetY = '0px';
+  cinemaFruitEffects: CinemaFruitEffectInstance[] = [];
 
   private subscriptions: Subscription[] = [];
   private isStartNewVoteLocked = false;
   private startNewVoteLockTimeout: ReturnType<typeof setTimeout> | null = null;
   private previousRoundId: string | null = null;
   private previousRoundRevealed = false;
-  private cinemaFruitExplosionTimeout: ReturnType<typeof setTimeout> | null = null;
-  private cinemaFruitCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+  private cinemaFruitEffectId = 0;
 
   constructor(private readonly pokerClient: PokerClientService) {}
 
@@ -110,7 +116,7 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearStartNewVoteLock();
-    this.clearCinemaFruitEffect();
+    this.clearCinemaFruitEffects();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
@@ -237,7 +243,7 @@ export class App implements OnInit, OnDestroy {
 
   private resetRoom(): void {
     this.clearStartNewVoteLock();
-    this.clearCinemaFruitEffect();
+    this.clearCinemaFruitEffects();
     this.previousRoundId = null;
     this.previousRoundRevealed = false;
     this.sessionId = null;
@@ -303,7 +309,6 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
-    this.clearCinemaFruitEffect();
     const targetBounds = target.getBoundingClientRect();
     const logoBounds = logo.getBoundingClientRect();
     const targetX = targetBounds.left + (targetBounds.width / 2);
@@ -311,34 +316,54 @@ export class App implements OnInit, OnDestroy {
     const startX = logoBounds.left + (logoBounds.width / 2);
     const startY = logoBounds.top + (logoBounds.height / 2);
 
-    this.cinemaFruitEffect = effect;
-    this.cinemaFruitEffectIsExploding = false;
-    this.cinemaFruitStartX = `${startX}px`;
-    this.cinemaFruitStartY = `${startY}px`;
-    this.cinemaFruitTargetX = `${targetX}px`;
-    this.cinemaFruitTargetY = `${targetY}px`;
+    const instance: CinemaFruitEffectInstance = {
+      id: this.cinemaFruitEffectId++,
+      fruitEffect: effect,
+      isExploding: false,
+      startX: `${startX}px`,
+      startY: `${startY}px`,
+      targetX: `${targetX}px`,
+      targetY: `${targetY}px`,
+      explosionTimeout: null,
+      cleanupTimeout: null
+    };
+    this.cinemaFruitEffects = [...this.cinemaFruitEffects, instance];
 
-    this.cinemaFruitExplosionTimeout = setTimeout(() => {
-      this.cinemaFruitEffectIsExploding = true;
-      this.cinemaFruitExplosionTimeout = null;
+    instance.explosionTimeout = setTimeout(() => {
+      instance.isExploding = true;
+      instance.explosionTimeout = null;
     }, 650);
-    this.cinemaFruitCleanupTimeout = setTimeout(() => {
-      this.clearCinemaFruitEffect();
+    instance.cleanupTimeout = setTimeout(() => {
+      this.removeCinemaFruitEffect(instance.id);
     }, 1000);
   }
 
-  private clearCinemaFruitEffect(): void {
-    if (this.cinemaFruitExplosionTimeout !== null) {
-      clearTimeout(this.cinemaFruitExplosionTimeout);
-      this.cinemaFruitExplosionTimeout = null;
+  private removeCinemaFruitEffect(id: number): void {
+    const instance = this.cinemaFruitEffects.find((effect) => effect.id === id);
+    if (!instance) {
+      return;
     }
 
-    if (this.cinemaFruitCleanupTimeout !== null) {
-      clearTimeout(this.cinemaFruitCleanupTimeout);
-      this.cinemaFruitCleanupTimeout = null;
+    if (instance.explosionTimeout !== null) {
+      clearTimeout(instance.explosionTimeout);
+    }
+    if (instance.cleanupTimeout !== null) {
+      clearTimeout(instance.cleanupTimeout);
     }
 
-    this.cinemaFruitEffect = null;
-    this.cinemaFruitEffectIsExploding = false;
+    this.cinemaFruitEffects = this.cinemaFruitEffects.filter((effect) => effect.id !== id);
+  }
+
+  private clearCinemaFruitEffects(): void {
+    for (const effect of this.cinemaFruitEffects) {
+      if (effect.explosionTimeout !== null) {
+        clearTimeout(effect.explosionTimeout);
+      }
+      if (effect.cleanupTimeout !== null) {
+        clearTimeout(effect.cleanupTimeout);
+      }
+    }
+
+    this.cinemaFruitEffects = [];
   }
 }
