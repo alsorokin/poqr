@@ -33,14 +33,16 @@ lightweight room interaction without changing planning-poker rules.
 
 ## Impact
 
-- **Frontend:** Angular root template, component state, styles, and frontend tests.
+- **Frontend:** Angular root template, component state, styles, unit tests, and
+  reusable browser E2E scenarios.
 - **Backend:** `PokerHub` gains a room-scoped logo-activation method and broadcast;
   no `RoomStore` state change is needed.
 - **Shared contracts:** New SignalR method/event names and their TypeScript handler
   must stay synchronized; no REST route changes.
 - **Infrastructure:** No change; the existing single-instance WebSocket-enabled
   SignalR deployment remains sufficient.
-- **Documentation:** No change expected.
+- **Documentation:** Document the `npm run test:e2e` browser-validation command
+  and how to add future E2E scenarios.
 
 ## Intentional Non-Goals
 

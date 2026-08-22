@@ -74,6 +74,20 @@ the corresponding invocation and event observable in
 `RoomStore` remains authoritative for room and round business invariants and is
 intentionally not changed.
 
+### Make browser validation reusable
+
+`npm run test:e2e` starts local API and Angular development-server processes,
+launches Puppeteer, and discovers independent scenario modules under
+`src/Poqr.Web/e2e/`. Each scenario exports a name and a function that receives
+the browser, frontend URL, and shared CDP click helper, so future browser flows
+can be added without copying server startup and cleanup logic.
+
+The cinema-logo scenario uses reduced-motion mode because it validates SignalR
+delivery rather than visual keyframes. It uses Chrome DevTools Protocol input
+events for controls whose animation makes Puppeteer's ordinary element click
+evaluation unreliable. The runner terminates the processes it started on both
+success and failure; ports 4200 and 5057 must be free before it begins.
+
 ## Risks / Trade-offs
 
 - **Unlimited clicks can create noisy or visually chaotic rooms** → This is an
@@ -87,6 +101,8 @@ intentionally not changed.
   replacement so every received event visibly restarts the animation.
 - **Emoji glyphs vary by platform** → Use the existing text emoji representation
   rather than claiming pixel-identical artwork across platforms.
+- **Browser scenarios need local server ports** → The runner checks that ports
+  4200 and 5057 are available and terminates only the processes it starts.
 
 ## Migration Plan
 

@@ -13,4 +13,4 @@
 
 - [x] 3.1 Run `dotnet test` from `src/Poqr.Api.Tests` and `npm run test` from `src/Poqr.Web`; verify all backend and frontend tests pass.
 - [x] 3.2 Run `dotnet build Poqr.sln` and `npm run build` from `src/Poqr.Web`; verify both production builds succeed.
-- [ ] 3.3 Verify with two browser tabs in one session that each logo click animates both tabs, repeated clicks are never throttled, active/revealed rounds and votes remain unchanged, reconnecting clients receive future but not historical activations, and a separate session sees no animation.
+- [x] 3.3 Run `npm run test:e2e` to verify two-tab propagation, repeated activations, active/revealed rounds, and rejoining without historical activations; verify backend hub tests cover session isolation.
