@@ -1,9 +1,6 @@
 name: Build and deploy ASP.Net Core app to Azure Web App - poqr
 
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 # Azure OIDC credentials — rename these secrets to AZURE_CLIENT_ID /

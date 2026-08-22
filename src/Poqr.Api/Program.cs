@@ -24,7 +24,9 @@ builder.Services.AddCors(options =>
 		}
 		else
 		{
-			policy.WithOrigins("https://poqr.azurewebsites.net");
+			policy.WithOrigins(
+				"https://poqr.azurewebsites.net",
+				"https://poqr.snay.am");
 		}
 		policy
 			.AllowAnyHeader()

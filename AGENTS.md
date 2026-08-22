@@ -75,23 +75,30 @@ Test runner note:
 
 - Frontend tests no longer require a system Chrome binary; `npm run test` sets `CHROME_BIN` to Puppeteer's bundled Chromium.
 
-## Deployment notes (Azure App Service)
+## Deployment notes
 
-- Infrastructure is defined in `infra/` as Bicep (IaC). All resource changes must go through Bicep — do not edit Azure resources manually.
-- Current deploy target: App Service `poqr` in resource group `poqr-rg` (West Europe).
-- GitHub Actions workflow runs three jobs: `infra` (Bicep deploy) and `build` in parallel, then `deploy` once both finish.
+- Current production target is one Debian server running `poqr.service` behind
+  Caddy. It is a single in-memory instance; every restart clears rooms.
+- Package local or CI releases with `./deploy/package-release.sh <release-id>
+  <output-directory>`. The package is a self-contained `linux-x64` publish
+  with the Angular build copied into `wwwroot`.
+- Server release commands are in `deploy/server/`. `poqr-activate` validates
+  the archive, atomically selects `current`, restarts the service, and restores
+  the previous release if `/api/status` does not become healthy.
+- The Debian runtime requires `libicu-dev` (which pulls the matching ICU
+  runtime package). Telemetry configuration belongs only in
+  `/etc/poqr/poqr.env`, mode `0600`; never commit it.
+- The `ci-deploy` SSH account/key is separate from interactive `deploy` access.
+  CI uses the `production` GitHub environment secrets `DEPLOY_HOST`,
+  `DEPLOY_HOST_KEY`, and `DEPLOY_SSH_PRIVATE_KEY`. Never use or store the
+  interactive private key in GitHub.
+- Install or change Caddy only after the selected public hostname resolves to
+  the server. Its configuration must proxy `/hubs/poker` with WebSocket
+  support.
+- Azure infrastructure remains defined in `infra/` as Bicep. The Azure
+  workflow is manual-only as a recovery path while
+  `.github/workflows/deploy-debian.yml` deploys `master` to Debian.
 - Required GitHub secrets (auto-generated names, aliased in workflow `env:` to clean names): `AZUREAPPSERVICE_CLIENTID_...`, `AZUREAPPSERVICE_TENANTID_...`, `AZUREAPPSERVICE_SUBSCRIPTIONID_...` (OIDC; service principal needs Contributor at subscription scope).
-- Avoid packaging nested publish folders repeatedly.
-  - Prefer publishing to a clean output directory and zipping that directory once.
-  - Clean temporary artifacts after deploy when possible.
-- Keep the CI package shape aligned with manual deploys: build Angular first, publish the API to a clean directory, then copy `src/Poqr.Web/dist/poqr-web/browser/.` into the published `wwwroot/` before deploy.
-- Deployment flow:
-  - `cd src/Poqr.Web && npm run build`
-  - `dotnet publish src/Poqr.Api/Poqr.Api.csproj -c Release -o /tmp/poqr-publish`
-  - Remove `/tmp/poqr-publish/publish` and `/tmp/poqr-publish/out` if they exist.
-  - Copy `src/Poqr.Web/dist/poqr-web/browser/.` into `/tmp/poqr-publish/wwwroot/`.
-  - Zip `/tmp/poqr-publish` once and deploy with `az webapp deploy --name poqr --resource-group poqr-rg --type zip`.
-  - Clean up `/tmp/poqr-publish` and the zip file after deploy.
 
 ## Known constraints
 
