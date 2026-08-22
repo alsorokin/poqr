@@ -1,4 +1,4 @@
-namespace Poker.Api.Contracts;
+namespace Poqr.Api.Contracts;
 
 public sealed record CreateSessionRequest(string ParticipantName);
 public sealed record JoinSessionRequest(string ParticipantName, string? ParticipantId);

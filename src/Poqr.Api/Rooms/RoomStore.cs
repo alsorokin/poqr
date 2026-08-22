@@ -1,7 +1,7 @@
-using Poker.Api.Contracts;
+using Poqr.Api.Contracts;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Poker.Api.Rooms;
+namespace Poqr.Api.Rooms;
 
 public sealed class RoomStore(ILogger<RoomStore>? logger = null)
 {

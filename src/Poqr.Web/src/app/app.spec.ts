@@ -76,7 +76,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Planning Poker');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Poqr');
   });
 
   it('renders mirrored accessible create and join session paths with their existing disabled states', () => {

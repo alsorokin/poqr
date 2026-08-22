@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Poker.Api.Contracts;
-using Poker.Api.Rooms;
-
-namespace Poker.Api.Controllers;
+using Poqr.Api.Contracts;
+using Poqr.Api.Rooms;
+namespace Poqr.Api.Controllers;
 
 [ApiController]
 [Route("api/sessions")]

@@ -1,5 +1,5 @@
-using Poker.Api.Hubs;
-using Poker.Api.Rooms;
+using Poqr.Api.Hubs;
+using Poqr.Api.Rooms;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 
 var builder = WebApplication.CreateBuilder(args);
