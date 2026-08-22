@@ -9,6 +9,7 @@ describe('App', () => {
     state$: Subject<RoomState>;
     error$: Subject<string>;
     sessionClosed$: Subject<string>;
+    cinemaLogoActivated$: Subject<void>;
   };
 
   const buildRoomState = (overrides?: Partial<RoomState>): RoomState => ({
@@ -38,22 +39,25 @@ describe('App', () => {
   beforeEach(async () => {
     pokerClient = jasmine.createSpyObj<PokerClientService>(
       'PokerClientService',
-      ['createSession', 'joinSession', 'connect', 'startRound', 'castVote', 'revealRound', 'leaveSession'],
+      ['createSession', 'joinSession', 'connect', 'startRound', 'castVote', 'revealRound', 'activateCinemaLogo', 'leaveSession'],
       {
         state$: new Subject<RoomState>(),
         error$: new Subject<string>(),
-        sessionClosed$: new Subject<string>()
+        sessionClosed$: new Subject<string>(),
+        cinemaLogoActivated$: new Subject<void>()
       }
     ) as jasmine.SpyObj<PokerClientService> & {
       state$: Subject<RoomState>;
       error$: Subject<string>;
       sessionClosed$: Subject<string>;
+      cinemaLogoActivated$: Subject<void>;
     };
 
     pokerClient.connect.and.resolveTo();
     pokerClient.startRound.and.resolveTo();
     pokerClient.castVote.and.resolveTo();
     pokerClient.revealRound.and.resolveTo();
+    pokerClient.activateCinemaLogo.and.resolveTo();
     pokerClient.leaveSession.and.resolveTo();
 
     sessionStorage.clear();
@@ -77,6 +81,17 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Poqr');
+  });
+
+  it('renders the tilted accessible cinema logo on the landing page', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logo = compiled.querySelector<HTMLElement>('.landing-logo');
+
+    expect(logo?.getAttribute('aria-label')).toBe('Pure cinema');
+    expect(logo?.textContent).toContain('✋🗿✋');
+    expect(logo?.querySelector('.brand-hand--mirrored')).not.toBeNull();
   });
 
   it('renders mirrored accessible create and join session paths with their existing disabled states', () => {
@@ -275,6 +290,28 @@ describe('App', () => {
     expect(app.sessionId).toBeNull();
     expect(app.participantId).toBeNull();
     expect(app.roomState).toBeNull();
+  });
+
+  it('activates the room cinema logo and restarts it for each received event', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.sessionId = 'ABC123';
+    app.participantId = 'p1';
+    app.roomState = buildRoomState();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logoButton = compiled.querySelector<HTMLButtonElement>('.cinema-logo-button');
+    expect(logoButton?.getAttribute('aria-label')).toBe('Pure cinema');
+    expect(logoButton?.querySelector('.brand-hand--mirrored')).not.toBeNull();
+
+    logoButton?.click();
+    await fixture.whenStable();
+    expect(pokerClient.activateCinemaLogo).toHaveBeenCalled();
+
+    pokerClient.cinemaLogoActivated$.next();
+    pokerClient.cinemaLogoActivated$.next();
+    expect(app.cinemaLogoAnimationKey).toBe(2);
   });
 
   it('locks starting a new vote for 5 seconds right after reveal', async () => {

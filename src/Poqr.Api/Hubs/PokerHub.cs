@@ -120,6 +120,48 @@ public sealed class PokerHub(RoomStore roomStore, ILogger<PokerHub> logger) : Hu
         await HandleLeave(command.SessionId, command.ParticipantId);
     }
 
+    public async Task ActivateCinemaLogo()
+    {
+        (string SessionId, string ParticipantId)? connection = null;
+
+        lock (ConnectionGate)
+        {
+            if (ConnectionMap.TryGetValue(Context.ConnectionId, out var info))
+            {
+                connection = info;
+            }
+        }
+
+        if (connection is null)
+        {
+            logger.LogWarning(
+                "Hub ActivateCinemaLogo rejected for unregistered connection {ConnectionId}.",
+                Context.ConnectionId);
+            return;
+        }
+
+        var state = roomStore.GetState(connection.Value.SessionId);
+        var participantIsConnected = state?.Participants.Any(participant =>
+            participant.ParticipantId == connection.Value.ParticipantId
+            && participant.IsConnected) == true;
+
+        if (!participantIsConnected)
+        {
+            logger.LogWarning(
+                "Hub ActivateCinemaLogo rejected for stale participant {ParticipantId} in session {SessionId}.",
+                connection.Value.ParticipantId,
+                connection.Value.SessionId);
+            return;
+        }
+
+        logger.LogDebug(
+            "Hub ActivateCinemaLogo requested for session {SessionId} by participant {ParticipantId}.",
+            connection.Value.SessionId,
+            connection.Value.ParticipantId);
+
+        await Clients.Group(connection.Value.SessionId).SendAsync("CinemaLogoActivated");
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         (string SessionId, string ParticipantId)? found = null;

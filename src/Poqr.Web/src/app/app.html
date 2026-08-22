@@ -1,6 +1,11 @@
 <main class="page">
   <section class="panel landing-panel" *ngIf="!sessionId">
-    <h1>Poqr</h1>
+    <div class="brand-logo landing-logo" role="img" aria-label="Pure cinema">
+      <span aria-hidden="true">✋</span>
+      <span aria-hidden="true">🗿</span>
+      <span class="brand-hand--mirrored" aria-hidden="true">✋</span>
+      <h1>Poqr</h1>
+    </div>
     <p class="subtitle">Anonymous sessions, quick voting, reveal anytime.</p>
 
     <div class="session-entry">
@@ -30,6 +35,16 @@
 
   <section class="panel" *ngIf="sessionId && roomState">
     <header class="room-header">
+      <button class="cinema-logo-button" (click)="activateCinemaLogo()" aria-label="Pure cinema">
+        <ng-container *ngFor="let animationKey of [cinemaLogoAnimationKey]">
+          <span class="brand-logo room-logo" [attr.data-animation-key]="animationKey" aria-hidden="true">
+            <span>✋</span>
+            <span>🗿</span>
+            <span class="brand-hand--mirrored">✋</span>
+            <span class="room-logo-wordmark">Poqr</span>
+          </span>
+        </ng-container>
+      </button>
       <div>
         <h2>Session {{ roomState.sessionId }}</h2>
         <p>Share link: <a [href]="shareLink">{{ shareLink }}</a></p>

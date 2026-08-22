@@ -24,6 +24,57 @@
   max-width: 560px;
 }
 
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: #273057;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.brand-logo h1 {
+  margin: 0 0 0 0.3rem;
+}
+
+.brand-hand--mirrored {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.landing-logo {
+  margin-bottom: 0.5rem;
+  font-size: 1.55rem;
+  animation: cinema-logo-entrance 550ms ease-out both;
+}
+
+.cinema-logo-button {
+  flex: 0 0 auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  color: #273057;
+  padding: 0.25rem;
+}
+
+.cinema-logo-button:hover {
+  background: #f0f4ff;
+}
+
+.cinema-logo-button:focus-visible {
+  outline: 3px solid #2854d7;
+  outline-offset: 2px;
+}
+
+.room-logo {
+  font-size: 1.2rem;
+  animation: cinema-logo-activation 550ms ease-out both;
+}
+
+.room-logo-wordmark {
+  margin-left: 0.2rem;
+}
+
 .subtitle {
   color: #454f7a;
   margin-top: 0;
@@ -131,7 +182,7 @@ button.ghost {
 
 .room-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: start;
   gap: 1rem;
 }
@@ -218,6 +269,36 @@ li.participant-disconnected {
   font-weight: 600;
 }
 
+@keyframes cinema-logo-entrance {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(-4deg) scale(1);
+  }
+}
+
+@keyframes cinema-logo-activation {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+
+  35% {
+    transform: rotate(-9deg) scale(1.16);
+  }
+
+  70% {
+    transform: rotate(7deg) scale(1.08);
+  }
+
+  100% {
+    transform: rotate(0) scale(1);
+  }
+}
+
 @media (max-width: 760px) {
   .page {
     padding: 1rem;
@@ -229,6 +310,11 @@ li.participant-disconnected {
 }
 
 @media (max-width: 560px) {
+  .room-header {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
   .entry-row {
     flex-direction: column;
     align-items: stretch;
@@ -245,5 +331,12 @@ li.participant-disconnected {
   .entry-row input {
     height: 2.5rem;
     min-height: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-logo,
+  .room-logo {
+    animation: none;
   }
 }

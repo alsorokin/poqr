@@ -23,6 +23,7 @@ export class App implements OnInit, OnDestroy {
   participantId: string | null = null;
   roomState: RoomState | null = null;
   error = '';
+  cinemaLogoAnimationKey = 0;
 
   private subscriptions: Subscription[] = [];
   private isStartNewVoteLocked = false;
@@ -90,6 +91,12 @@ export class App implements OnInit, OnDestroy {
         this.resetRoom();
       })
     );
+
+    this.subscriptions.push(
+      this.pokerClient.cinemaLogoActivated$.subscribe(() => {
+        this.cinemaLogoAnimationKey += 1;
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -147,6 +154,10 @@ export class App implements OnInit, OnDestroy {
     }
 
     await this.pokerClient.revealRound(this.sessionId, this.participantId, this.currentRoundId);
+  }
+
+  async activateCinemaLogo(): Promise<void> {
+    await this.pokerClient.activateCinemaLogo();
   }
 
   async leave(): Promise<void> {
