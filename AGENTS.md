@@ -39,6 +39,10 @@ Purpose: fast onboarding for coding agents working in this repository.
   - Starts local API/frontend servers and requires ports 5057 and 4200 to be free.
   - Discovers scenarios in `src/Poqr.Web/e2e/*.e2e.mjs`; add a module exporting
     `name` and `run(context)` for new browser coverage.
+  - For a manual deployed-origin smoke test, run
+    `POQR_E2E_ORIGIN=https://poqr.snay.am npm run test:e2e` from
+    `src/Poqr.Web`. This mode starts no local servers and creates anonymous
+    test sessions; do not use it as a CI check.
 
 ## Agent workflow expectations
 

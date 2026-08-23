@@ -54,6 +54,25 @@ dotnet build Poqr.sln
 cd src/Poqr.Web && npm run build
 ```
 
+## Browser E2E tests
+
+Run the local Puppeteer scenarios, which start the API and SPA on ports 5057
+and 4200:
+
+```bash
+cd src/Poqr.Web && npm run test:e2e
+```
+
+To run the same scenarios manually against a deployed HTTPS origin without
+starting local servers, set `POQR_E2E_ORIGIN` to its origin:
+
+```bash
+cd src/Poqr.Web && POQR_E2E_ORIGIN=https://poqr.snay.am npm run test:e2e
+```
+
+External-origin mode is a manual deployment smoke test, not a CI check. It
+creates anonymous test sessions on the selected deployment.
+
 ## Debian deployment
 
 Poqr runs as one self-contained .NET process under systemd. Restarting the

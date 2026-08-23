@@ -1,12 +1,16 @@
+import { waitForRoomStateUpdate } from './room-readiness.mjs';
+
 export const name = 'game room layout';
 
-async function createSession(browser, frontendUrl) {
+async function createSession(browser, frontendUrl, observePage, waitForSignalRMessage) {
   const page = await browser.newPage();
+  await observePage(page, 'layout');
   await page.setViewport({ width: 320, height: 800, deviceScaleFactor: 1 });
   await page.goto(frontendUrl, { waitUntil: 'domcontentloaded' });
   await page.locator('#participant-name').fill('Alice');
   await page.locator('.create-path button').click();
   await page.waitForSelector('.room-header');
+  await waitForRoomStateUpdate(waitForSignalRMessage, page);
   return page;
 }
 
@@ -78,8 +82,8 @@ async function expectUnwrappedJoker(page) {
   }
 }
 
-export async function run({ browser, frontendUrl }) {
-  const page = await createSession(browser, frontendUrl);
+export async function run({ browser, frontendUrl, observePage, waitForSignalRMessage }) {
+  const page = await createSession(browser, frontendUrl, observePage, waitForSignalRMessage);
   await expectNarrowHeaderLayout(page);
   await expectUnwrappedJoker(page);
 }
