@@ -123,12 +123,10 @@ sudo /usr/local/sbin/poqr-rollback
 ### HTTPS and CI
 
 `poqr.snay.am` is Poqr's canonical hostname. Its DNS record must point to the
-Debian server before installing the Caddy configuration. Keep `poqr.snay.me`
-pointed at the server so Caddy can retain its TLS-protected, equivalent-path
-redirect to the canonical hostname; do not change the independently hosted
-`snay.am` apex record.
+Debian server before installing the Caddy configuration. Do not change the
+independently hosted `snay.am` apex record.
 
-After both Poqr hostnames resolve to the server, install Caddy, copy
+After `poqr.snay.am` resolves to the server, install Caddy, copy
 `deploy/server/Caddyfile` to `/etc/caddy/Caddyfile`, then validate and reload
 it:
 
@@ -138,15 +136,13 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-Caddy redirects HTTP to HTTPS, provisions certificates for both Poqr
-hostnames, proxies the SPA, API, and SignalR WebSocket hub from
-`poqr.snay.am` to `127.0.0.1:8080`, and redirects every `poqr.snay.me` path
-to its equivalent canonical HTTPS URL.
+Caddy redirects HTTP to HTTPS, provisions a certificate for `poqr.snay.am`,
+and proxies its SPA, API, and SignalR WebSocket hub to `127.0.0.1:8080`.
 
-The legacy origin is not permitted by production CORS. Retain the redirect and
-certificate until the domain retirement window ends; only then remove the
-legacy Caddy site and DNS record. Keep the prior Caddy configuration available
-to roll back the final retirement.
+After the redirect-retention period ends, remove the `poqr.snay.me` DNS record
+and its Caddy site. Keep the preceding redirect configuration and confirm
+`https://poqr.snay.am/api/status` remains healthy so the legacy site can be
+restored if retirement fails.
 
 The `.github/workflows/deploy-debian.yml` workflow deploys pushes to `master`.
 Configure these GitHub environment secrets for `production` before merging it:
