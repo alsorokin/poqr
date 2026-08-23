@@ -1,7 +1,3 @@
-poqr.snay.me {
-	redir https://poqr.snay.am{uri} permanent
-}
-
 poqr.snay.am {
 	reverse_proxy 127.0.0.1:8080
 }

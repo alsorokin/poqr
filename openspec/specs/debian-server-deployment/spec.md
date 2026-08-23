@@ -7,15 +7,18 @@ Provide a reliable HTTPS deployment path for the single-instance Poqr applicatio
 ## Requirements
 
 ### Requirement: Secure public application endpoint
-The system SHALL serve Poqr at its configured public hostname over HTTPS and redirect HTTP requests to HTTPS. The endpoint SHALL continue serving the SPA, REST API, and SignalR hub from one origin.
+The system SHALL serve Poqr at `poqr.snay.am` over HTTPS and redirect HTTP
+requests to the equivalent HTTPS URL. The endpoint SHALL continue serving the
+SPA, REST API, and SignalR hub from one origin.
 
 #### Scenario: Secure browser access
-- **WHEN** a browser requests the configured public hostname over HTTP
+- **WHEN** a browser requests `poqr.snay.am` over HTTP
 - **THEN** it is redirected to the equivalent HTTPS URL
 
 #### Scenario: Application availability
-- **WHEN** a browser requests the configured public hostname over HTTPS
-- **THEN** it receives the Poqr SPA and the API status endpoint responds successfully
+- **WHEN** a browser requests `https://poqr.snay.am`
+- **THEN** it receives the Poqr SPA and the API status endpoint responds
+  successfully
 
 ### Requirement: Real-time connectivity through the public endpoint
 The public deployment SHALL preserve SignalR WebSocket connectivity at `/hubs/poker` so that participants can join, reconnect, and receive room updates using the same real-time behavior as the existing deployment.
@@ -47,15 +50,25 @@ Interactive server administration and continuous deployment SHALL use separate S
 - **THEN** it authenticates with its dedicated SSH key and does not access the interactive administrator key
 
 ### Requirement: Compatible production origins and telemetry
-The production backend SHALL accept browser API and SignalR requests from both `https://poqr.azurewebsites.net` and `https://poqr.snay.me`. When an Application Insights connection string is configured, the Debian deployment SHALL send application telemetry to that resource.
+The production backend SHALL accept browser API and SignalR requests from
+`https://poqr.azurewebsites.net` and `https://poqr.snay.am`, and SHALL not
+include `https://poqr.snay.me` in its CORS policy. When an Application
+Insights connection string is configured, the Debian deployment SHALL send
+application telemetry to that resource.
 
 #### Scenario: Existing Azure origin remains compatible
 - **WHEN** a browser application is served from `https://poqr.azurewebsites.net`
-- **THEN** its API and SignalR requests are accepted by the production CORS policy
+- **THEN** its API and SignalR requests are accepted by the production CORS
+  policy
 
-#### Scenario: Debian origin is compatible
+#### Scenario: Canonical Debian origin is compatible
+- **WHEN** a browser application is served from `https://poqr.snay.am`
+- **THEN** its API and SignalR requests are accepted by the production CORS
+  policy
+
+#### Scenario: Legacy origin is not compatible
 - **WHEN** a browser application is served from `https://poqr.snay.me`
-- **THEN** its API and SignalR requests are accepted by the production CORS policy
+- **THEN** `https://poqr.snay.me` is absent from the production CORS policy
 
 #### Scenario: Telemetry is configured
 - **WHEN** the Debian service has an Application Insights connection string
