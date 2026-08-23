@@ -92,8 +92,13 @@ Test runner note:
   CI uses the `production` GitHub environment secrets `DEPLOY_HOST`,
   `DEPLOY_HOST_KEY`, and `DEPLOY_SSH_PRIVATE_KEY`. Never use or store the
   interactive private key in GitHub.
-- Install or change Caddy only after `poqr.snay.me` resolves to the server.
-  Its configuration must proxy `/hubs/poker` with WebSocket support.
+- `poqr.snay.am` is the canonical Poqr hostname. During migration,
+  `poqr.snay.me` must also resolve to the server; do not change the
+  independently hosted `snay.am` apex record. Install or change Caddy only
+  after the required hostnames resolve. Its configuration must proxy
+  `/hubs/poker` with WebSocket support. After the approved migration period,
+  retain a TLS-protected redirect from `poqr.snay.me` to `poqr.snay.am` before
+  removing the legacy DNS and CORS configuration.
 - Azure infrastructure remains defined in `infra/` as Bicep. The Azure
   workflow is manual-only as a recovery path while
   `.github/workflows/deploy-debian.yml` deploys `master` to Debian.
