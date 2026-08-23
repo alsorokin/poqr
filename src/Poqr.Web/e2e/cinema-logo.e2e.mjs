@@ -1,9 +1,12 @@
+import { waitForNextRoomStateUpdate, waitForRoomStateUpdate } from './room-readiness.mjs';
+
 export const name = 'cinema logo';
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function createOrJoinSession(browser, frontendUrl, name, sessionId) {
+async function createOrJoinSession(browser, frontendUrl, name, sessionId, observePage) {
   const page = await browser.newPage();
+  await observePage(page, name);
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.goto(sessionId ? `${frontendUrl}/?session=${sessionId}` : frontendUrl, {
     waitUntil: 'domcontentloaded'
@@ -70,15 +73,22 @@ async function expectConcurrentFruitEffects(page) {
   );
 }
 
-export async function run({ browser, frontendUrl, clickWithCdp }) {
-  const first = await createOrJoinSession(browser, frontendUrl, 'Alice');
+export async function run({
+  browser,
+  frontendUrl,
+  clickWithCdp,
+  observePage,
+  waitForSignalRMessage,
+  waitForNextSignalRMessage
+}) {
+  const first = await createOrJoinSession(browser, frontendUrl, 'Alice', undefined, observePage);
   const sessionId = new URL(first.url()).searchParams.get('session');
   if (!sessionId) {
     throw new Error('Creating a session did not add a session id to the URL.');
   }
 
-  const second = await createOrJoinSession(browser, frontendUrl, 'Bob', sessionId);
-  await wait(250);
+  const second = await createOrJoinSession(browser, frontendUrl, 'Bob', sessionId, observePage);
+  await waitForRoomStateUpdate(waitForSignalRMessage, second);
 
   await expectLogoActivation(clickWithCdp, first, second, 1);
   await expectLogoActivation(clickWithCdp, first, second, 2);
@@ -106,9 +116,10 @@ export async function run({ browser, frontendUrl, clickWithCdp }) {
   await second.reload({ waitUntil: 'domcontentloaded' });
   await second.locator('#participant-name').fill('Bob');
   await second.locator('#session-code').fill(sessionId);
+  const rejoinState = waitForNextRoomStateUpdate(waitForNextSignalRMessage, second);
   await second.locator('.join-path button').click();
   await second.waitForSelector('.room-logo[data-animation-key="0"]');
-  await wait(250);
+  await rejoinState;
 
   await expectLogoActivation(clickWithCdp, first, second, 1);
 }
