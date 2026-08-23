@@ -122,10 +122,11 @@ sudo /usr/local/sbin/poqr-rollback
 
 ### HTTPS and CI
 
-`poqr.snay.am` is Poqr's canonical hostname. Create a DNS record for it that
-points to the Debian server before installing the Caddy configuration. Keep
-`poqr.snay.me` pointed at the server during the migration period, and do not
-change the independently hosted `snay.am` apex record.
+`poqr.snay.am` is Poqr's canonical hostname. Its DNS record must point to the
+Debian server before installing the Caddy configuration. Keep `poqr.snay.me`
+pointed at the server so Caddy can retain its TLS-protected, equivalent-path
+redirect to the canonical hostname; do not change the independently hosted
+`snay.am` apex record.
 
 After both Poqr hostnames resolve to the server, install Caddy, copy
 `deploy/server/Caddyfile` to `/etc/caddy/Caddyfile`, then validate and reload
@@ -138,15 +139,14 @@ sudo systemctl reload caddy
 ```
 
 Caddy redirects HTTP to HTTPS, provisions certificates for both Poqr
-hostnames, and proxies the SPA, API, and SignalR WebSocket hub to
-`127.0.0.1:8080`.
+hostnames, proxies the SPA, API, and SignalR WebSocket hub from
+`poqr.snay.am` to `127.0.0.1:8080`, and redirects every `poqr.snay.me` path
+to its equivalent canonical HTTPS URL.
 
-After an approved migration period, change the `poqr.snay.me` Caddy site from
-the reverse proxy to an equivalent-path HTTPS redirect to `poqr.snay.am`, then
-remove `https://poqr.snay.me` from the production CORS policy in a separate
-release. Retain the redirect and certificate until the domain retirement
-window ends; only then remove the legacy Caddy site and DNS record. Keep the
-prior Caddy configuration available to roll back the retirement.
+The legacy origin is not permitted by production CORS. Retain the redirect and
+certificate until the domain retirement window ends; only then remove the
+legacy Caddy site and DNS record. Keep the prior Caddy configuration available
+to roll back the final retirement.
 
 The `.github/workflows/deploy-debian.yml` workflow deploys pushes to `master`.
 Configure these GitHub environment secrets for `production` before merging it:

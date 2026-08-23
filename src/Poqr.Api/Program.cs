@@ -26,7 +26,6 @@ builder.Services.AddCors(options =>
 		{
 			policy.WithOrigins(
 				"https://poqr.azurewebsites.net",
-				"https://poqr.snay.me",
 				"https://poqr.snay.am");
 		}
 		policy
