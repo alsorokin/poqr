@@ -1,4 +1,4 @@
-# Poqr (Angular + .NET)
+# ✋️🗿🤚 Poqr (Angular + .NET)
 
 First implementation slice of an anonymous planning poker app.
 
