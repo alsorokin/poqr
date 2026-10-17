@@ -1,6 +1,6 @@
-# ✋️🗿🤚 Poqr (Angular + .NET)
+# ✋️🗿🤚 Poqr
 
-First implementation slice of an anonymous planning poker app.
+Anonymous planning poker app. Free and simple. Because all others suck.
 
 ## Stack
 
