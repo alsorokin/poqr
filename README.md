@@ -258,9 +258,3 @@ exporting `name` and `run(context)` to extend browser coverage. The initial
 cinema-logo scenario verifies two-tab propagation, repeated activations,
 active/revealed rounds, and rejoining; room scoping is covered by backend hub
 tests. The command requires ports 4200 and 5057 to be available.
-
-## Notes
-
-- Data is intentionally ephemeral for v1 (server restart clears sessions).
-- This is single-instance in-memory state, suitable for the initial 10+ user target.
-- Angular CLI warns when using odd-numbered Node versions (for example v25); prefer an LTS Node version for development and CI.
