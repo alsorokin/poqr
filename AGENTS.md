@@ -114,31 +114,14 @@ Test runner note:
 
 ## Deployment notes
 
-- Current production target is one Debian server running `poqr.service` behind
-  Caddy. It is a single in-memory instance; every restart clears rooms.
-- Package local or CI releases with `./deploy/package-release.sh <release-id>
-  <output-directory>`. The package is a self-contained `linux-x64` publish
-  with the Angular build copied into `wwwroot`.
-- Server release commands are in `deploy/server/`. `poqr-activate` validates
-  the archive, atomically selects `current`, restarts the service, and restores
-  the previous release if `/api/status` does not become healthy.
-- The Debian runtime requires `libicu-dev` (which pulls the matching ICU
-  runtime package). Telemetry configuration belongs only in
-  `/etc/poqr/poqr.env`, mode `0600`; never commit it.
-- The `ci-deploy` SSH account/key is separate from interactive `deploy` access.
-  CI uses the `production` GitHub environment secrets `DEPLOY_HOST`,
-  `DEPLOY_HOST_KEY`, and `DEPLOY_SSH_PRIVATE_KEY`. Never use or store the
-  interactive private key in GitHub.
-- `poqr.snay.am` is the canonical Poqr hostname; do not change the
-  independently hosted `snay.am` apex record. Its Caddy configuration must
-  proxy `/hubs/poker` with WebSocket support. The legacy origin is absent from
-  production CORS. After the redirect retention period ends, remove the
-  `poqr.snay.me` Caddy site and DNS record, retaining the preceding redirect
-  configuration for rollback.
-- Azure infrastructure remains defined in `infra/` as Bicep. The Azure
-  workflow is manual-only as a recovery path while
-  `.github/workflows/deploy-debian.yml` deploys `master` to Debian.
-- Required GitHub secrets (auto-generated names, aliased in workflow `env:` to clean names): `AZUREAPPSERVICE_CLIENTID_...`, `AZUREAPPSERVICE_TENANTID_...`, `AZUREAPPSERVICE_SUBSCRIPTIONID_...` (OIDC; service principal needs Contributor at subscription scope).
+- See [docs/deployment.md](docs/deployment.md) for Debian release/rollback and
+  Azure recovery instructions. Production is one in-memory Debian instance;
+  restarts clear rooms.
+- Keep deployment credentials and telemetry secrets out of the repository.
+  The CI deploy key must remain separate from interactive access, and the
+  independently hosted `snay.am` apex record must not be changed.
+- Azure infrastructure remains in `infra/`; its GitHub Actions workflow is
+  manual-only while `.github/workflows/deploy-debian.yml` deploys `master`.
 
 ## Known constraints
 
