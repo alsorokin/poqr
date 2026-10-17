@@ -108,7 +108,7 @@ describe('App', () => {
 
     expect(compiled.querySelector('.session-entry')).not.toBeNull();
     expect(compiled.querySelector('.subtitle')?.textContent).toBe(
-      'Planning poker for teams. Free and simple. No sign-up, just share a link.'
+      'Free and simple planning poker. No sign-up, just share a link'
     );
     expect(compiled.querySelector('.session-divider')?.textContent).toContain('or join an existing session');
     expect(compiled.querySelector('.create-path h2')?.textContent).toContain('Start a new session');
