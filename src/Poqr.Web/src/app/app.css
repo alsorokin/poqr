@@ -139,6 +139,10 @@ button.ghost {
   font-size: 1rem;
 }
 
+.invitation-entry h2 {
+  text-align: right;
+}
+
 .session-divider {
   display: flex;
   align-items: center;
@@ -166,6 +170,12 @@ button.ghost {
   flex: 1;
   min-width: 0;
   width: 100%;
+}
+
+.invitation-entry .entry-row label {
+  display: block;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .visually-hidden {
@@ -424,6 +434,11 @@ li.participant-disconnected {
   .entry-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .invitation-entry .entry-row {
+    flex-direction: row;
+    align-items: center;
   }
 
   .create-path button {

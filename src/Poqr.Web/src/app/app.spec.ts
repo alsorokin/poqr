@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { App } from './app';
 import { PokerClientService } from './poker-client.service';
 import { CinemaLogoActivatedEnvelope, RoomState, SessionJoinResponse } from './poker.types';
@@ -59,6 +59,7 @@ describe('App', () => {
     pokerClient.revealRound.and.resolveTo();
     pokerClient.activateCinemaLogo.and.resolveTo();
     pokerClient.leaveSession.and.resolveTo();
+    pokerClient.joinSession.and.returnValue(of(buildJoinResponse()));
 
     sessionStorage.clear();
     localStorage.clear();
@@ -106,6 +107,7 @@ describe('App', () => {
     const sessionCodeInput = compiled.querySelector<HTMLInputElement>('#session-code');
 
     expect(compiled.querySelector('.session-entry')).not.toBeNull();
+    expect(compiled.querySelector('.subtitle')?.textContent).toContain('Anonymous sessions');
     expect(compiled.querySelector('.session-divider')?.textContent).toContain('or join an existing session');
     expect(compiled.querySelector('.create-path h2')?.textContent).toContain('Start a new session');
     expect(compiled.querySelector('.join-path h2')?.textContent).toContain('Join an existing session');
@@ -126,12 +128,59 @@ describe('App', () => {
     expect(joinButton?.disabled).toBeFalse();
   });
 
-  it('reads session query parameter on init', () => {
-    window.history.replaceState({}, '', '/?session=abc123');
+  it('uses normal entry for missing, empty, or whitespace-only session parameters without making requests', () => {
+    for (const search of ['', '?session=', '?session=%20%20']) {
+      window.history.replaceState({}, '', `/${search}`);
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.invitationSessionCode).toBeNull();
+      expect(fixture.nativeElement.querySelector('.create-path')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.invitation-entry')).toBeNull();
+      expect(pokerClient.createSession).not.toHaveBeenCalled();
+      expect(pokerClient.joinSession).not.toHaveBeenCalled();
+      fixture.destroy();
+    }
+  });
+
+  it('trims and uppercases a nonblank invitation code without pre-filling normal entry', () => {
+    window.history.replaceState({}, '', '/?session=%20abC123%20');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
+    const app = fixture.componentInstance;
 
-    expect(fixture.componentInstance.sessionInput).toBe('ABC123');
+    expect(app.invitationSessionCode).toBe('ABC123');
+    expect(app.sessionInput).toBe('');
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    expect(pokerClient.joinSession).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('renders one accessible join form for an invitation', async () => {
+    window.history.replaceState({}, '', '/?session=7ugpct');
+    localStorage.setItem('poker.participantName', 'Alice');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('.invitation-entry h2')?.textContent?.trim()).toBe('Joining session 7UGPCT');
+    expect(compiled.querySelector('.subtitle')).toBeNull();
+    expect(compiled.querySelector('.invitation-code')).toBeNull();
+    expect(compiled.querySelector('#invitation-participant-name')?.getAttribute('placeholder')).toBe('Your name');
+    expect(compiled.querySelector('label[for="invitation-participant-name"]')?.textContent).toBe('Your name:');
+    expect(compiled.querySelector('.invitation-entry .entry-row label + input')?.id).toBe('invitation-participant-name');
+    expect(compiled.querySelector<HTMLInputElement>('#invitation-participant-name')?.value).toBe('Alice');
+    expect(compiled.querySelectorAll('.invitation-entry form button').length).toBe(1);
+    expect(compiled.querySelector('.invitation-entry form button')?.textContent).toContain('Join session');
+    expect(compiled.querySelector('.invitation-entry .ghost')?.textContent).toContain('Start a different session');
+    expect(compiled.querySelector('#session-code')).toBeNull();
+    expect(compiled.querySelector('.create-path')).toBeNull();
+    expect(compiled.querySelector('.join-path')).toBeNull();
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    expect(pokerClient.joinSession).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 
   it('restores the last participant name on init', () => {
@@ -177,6 +226,117 @@ describe('App', () => {
     app.joinSession();
 
     expect(pokerClient.joinSession).toHaveBeenCalledWith('abc123', 'Alice', 'remembered-p1');
+  });
+
+  it('submits an invitation join with the edited remembered name and participant identity', async () => {
+    const response = buildJoinResponse({
+      sessionId: '7UGPCT',
+      state: buildRoomState({ sessionId: '7UGPCT' })
+    });
+    pokerClient.joinSession.and.returnValue(of(response));
+    localStorage.setItem('poker.participantName', 'Alice');
+    sessionStorage.setItem('poker.participant.7UGPCT', 'remembered-p1');
+    window.history.replaceState({}, '', '/?session=7ugpct');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    fixture.componentInstance.participantName = 'Alicia';
+    fixture.detectChanges();
+    expect(fixture.componentInstance.participantName).toBe('Alicia');
+    compiled.querySelector<HTMLButtonElement>('.invitation-entry form button')?.click();
+    await fixture.whenStable();
+
+    expect(pokerClient.joinSession).toHaveBeenCalledWith('7UGPCT', 'Alicia', 'remembered-p1');
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    expect(pokerClient.connect).toHaveBeenCalledWith('7UGPCT', 'p1');
+    expect(fixture.componentInstance.sessionId).toBe('7UGPCT');
+    expect(localStorage.getItem('poker.participantName')).toBe('Alicia');
+    fixture.destroy();
+  });
+
+  it('rejects a blank invitation name and submits the same join path from the form', () => {
+    window.history.replaceState({}, '', '/?session=abc123');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const app = fixture.componentInstance;
+    const compiled = fixture.nativeElement as HTMLElement;
+    const submitButton = compiled.querySelector<HTMLButtonElement>('.invitation-entry form button')!;
+
+    expect(submitButton.disabled).toBeTrue();
+    app.participantName = '   ';
+    fixture.detectChanges();
+    expect(submitButton.disabled).toBeTrue();
+    app.joinSession();
+    expect(pokerClient.joinSession).not.toHaveBeenCalled();
+
+    app.participantName = 'Bob';
+    fixture.detectChanges();
+    expect(submitButton.disabled).toBeFalse();
+    compiled.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(pokerClient.joinSession).toHaveBeenCalledWith('ABC123', 'Bob', null);
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('escapes invitation entry without losing the name or stored participant identities', () => {
+    window.history.replaceState({}, '', '/?keep=1&session=abc123#invite');
+    localStorage.setItem('poker.participantName', 'Alice');
+    sessionStorage.setItem('poker.participant.ABC123', 'remembered-p1');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const app = fixture.componentInstance;
+    app.participantName = 'Alicia';
+    app.error = 'Unable to join that session.';
+
+    app.startDifferentSession();
+    fixture.detectChanges();
+    const url = new URL(window.location.href);
+
+    expect(app.invitationSessionCode).toBeNull();
+    expect(app.sessionInput).toBe('');
+    expect(app.error).toBe('');
+    expect(app.participantName).toBe('Alicia');
+    expect(url.searchParams.get('session')).toBeNull();
+    expect(url.searchParams.get('keep')).toBe('1');
+    expect(url.hash).toBe('#invite');
+    expect(localStorage.getItem('poker.participantName')).toBe('Alice');
+    expect(sessionStorage.getItem('poker.participant.ABC123')).toBe('remembered-p1');
+    expect(fixture.nativeElement.querySelector('.create-path')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.invitation-entry')).toBeNull();
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    expect(pokerClient.joinSession).not.toHaveBeenCalled();
+
+    fixture.destroy();
+    const reloadedFixture = TestBed.createComponent(App);
+    reloadedFixture.detectChanges();
+    expect(reloadedFixture.componentInstance.invitationSessionCode).toBeNull();
+    expect(reloadedFixture.nativeElement.querySelector('.create-path')).not.toBeNull();
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    expect(pokerClient.joinSession).not.toHaveBeenCalled();
+    reloadedFixture.destroy();
+  });
+
+  it('keeps failed invitation joins available for retry or escape', () => {
+    window.history.replaceState({}, '', '/?session=missing');
+    pokerClient.joinSession.and.returnValue(throwError(() => new Error('Not found')));
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const app = fixture.componentInstance;
+    app.participantName = 'Alice';
+
+    app.joinSession();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(app.invitationSessionCode).toBe('MISSING');
+    expect(app.participantName).toBe('Alice');
+    expect(compiled.querySelector('.invitation-code')).toBeNull();
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toBe('Unable to join that session.');
+    expect(compiled.querySelector('.invitation-entry form button')).not.toBeNull();
+    expect(compiled.querySelector('.invitation-entry .ghost')).not.toBeNull();
+    expect(pokerClient.createSession).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 
   it('does not vote when round is revealed', async () => {
@@ -301,6 +461,7 @@ describe('App', () => {
     app.participantId = 'p1';
     app.roomState = buildRoomState();
     app.selectedCard = '5';
+    app.invitationSessionCode = 'ABC123';
 
     pokerClient.sessionClosed$.next('Session was closed by host.');
 
@@ -309,6 +470,7 @@ describe('App', () => {
     expect(app.participantId).toBeNull();
     expect(app.roomState).toBeNull();
     expect(app.selectedCard).toBeNull();
+    expect(app.invitationSessionCode).toBe('ABC123');
   });
 
   it('clears local state immediately while the leave request is pending', () => {

@@ -13,6 +13,7 @@ First implementation slice of an anonymous planning poker app.
 
 - Create session without auth
 - Join session by shareable code/link
+- Shared session links open a join-focused screen; creation remains available through "Start a different session"
 - Remember the last participant name locally in the browser
 - Realtime room updates with SignalR
 - Start round (any participant)

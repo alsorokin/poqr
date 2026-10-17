@@ -29,6 +29,7 @@ export class App implements OnInit, OnDestroy {
 
   participantName = '';
   sessionInput = '';
+  invitationSessionCode: string | null = null;
   selectedCard: string | null = null;
 
   sessionId: string | null = null;
@@ -81,8 +82,9 @@ export class App implements OnInit, OnDestroy {
     this.participantName = this.readParticipantName();
 
     const querySession = new URLSearchParams(window.location.search).get('session');
-    if (querySession) {
-      this.sessionInput = querySession.toUpperCase();
+    const invitationSessionCode = querySession?.trim().toUpperCase();
+    if (invitationSessionCode) {
+      this.invitationSessionCode = invitationSessionCode;
     }
 
     this.subscriptions.push(
@@ -131,15 +133,30 @@ export class App implements OnInit, OnDestroy {
   }
 
   joinSession(): void {
-    this.error = '';
-    const rememberedParticipantId = this.readParticipantId(this.sessionInput);
+    const sessionId = this.invitationSessionCode ?? this.sessionInput;
+    if (!this.participantName.trim() || !sessionId.trim()) {
+      return;
+    }
 
-    this.pokerClient.joinSession(this.sessionInput, this.participantName, rememberedParticipantId).subscribe({
+    this.error = '';
+    const rememberedParticipantId = this.readParticipantId(sessionId);
+
+    this.pokerClient.joinSession(sessionId, this.participantName, rememberedParticipantId).subscribe({
       next: (response) => this.handleJoined(response),
       error: () => {
         this.error = 'Unable to join that session.';
       }
     });
+  }
+
+  startDifferentSession(): void {
+    this.invitationSessionCode = null;
+    this.sessionInput = '';
+    this.error = '';
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('session');
+    window.history.replaceState(window.history.state, '', url.toString());
   }
 
   async startRound(): Promise<void> {

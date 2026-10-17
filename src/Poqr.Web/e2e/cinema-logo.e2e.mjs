@@ -12,11 +12,11 @@ async function createOrJoinSession(browser, frontendUrl, name, sessionId, observ
     waitUntil: 'domcontentloaded'
   });
 
-  await page.locator('#participant-name').fill(name);
   if (sessionId) {
-    await page.locator('#session-code').fill(sessionId);
-    await page.locator('.join-path button').click();
+    await page.locator('#invitation-participant-name').fill(name);
+    await page.locator('.invitation-entry form button').click();
   } else {
+    await page.locator('#participant-name').fill(name);
     await page.locator('.create-path button').click();
   }
 
@@ -114,10 +114,9 @@ export async function run({
   await expectNoFruitEffect(second);
 
   await second.reload({ waitUntil: 'domcontentloaded' });
-  await second.locator('#participant-name').fill('Bob');
-  await second.locator('#session-code').fill(sessionId);
+  await second.locator('#invitation-participant-name').fill('Bob');
   const rejoinState = waitForNextRoomStateUpdate(waitForNextSignalRMessage, second);
-  await second.locator('.join-path button').click();
+  await second.locator('.invitation-entry form button').click();
   await second.waitForSelector('.room-logo[data-animation-key="0"]');
   await rejoinState;
 

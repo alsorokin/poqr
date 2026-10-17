@@ -6,9 +6,9 @@
       <span class="brand-hand--mirrored" aria-hidden="true">✋</span>
       <h1>Poqr</h1>
     </div>
-    <p class="subtitle">Anonymous sessions, quick voting, reveal anytime.</p>
+    <p class="subtitle" *ngIf="!invitationSessionCode">Anonymous sessions, quick voting, reveal anytime.</p>
 
-    <div class="session-entry">
+    <div class="session-entry" *ngIf="!invitationSessionCode">
       <div class="entry-path create-path">
         <h2>Start a new session</h2>
         <div class="entry-row">
@@ -30,7 +30,25 @@
       </div>
     </div>
 
-    <p class="error" *ngIf="error">{{ error }}</p>
+    <div class="session-entry invitation-entry" *ngIf="invitationSessionCode">
+      <div class="entry-path">
+        <h2>Joining session {{ invitationSessionCode }}</h2>
+      </div>
+      <form class="entry-path" (ngSubmit)="joinSession()">
+        <div class="entry-row">
+          <label for="invitation-participant-name">Your name:</label>
+          <input
+            id="invitation-participant-name"
+            name="participantName"
+            [(ngModel)]="participantName"
+            placeholder="Your name" />
+        </div>
+        <button type="submit" [disabled]="!participantName.trim()">Join session</button>
+      </form>
+      <button class="ghost" type="button" (click)="startDifferentSession()">Start a different session</button>
+    </div>
+
+    <p class="error" *ngIf="error" role="alert">{{ error }}</p>
   </section>
 
   <section class="panel" *ngIf="sessionId && roomState">
@@ -108,7 +126,7 @@
       </ng-template>
     </div>
 
-    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="error" *ngIf="error" role="alert">{{ error }}</p>
   </section>
 
   <div

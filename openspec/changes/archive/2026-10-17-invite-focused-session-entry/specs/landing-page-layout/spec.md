@@ -34,11 +34,11 @@ The landing page SHALL keep every entry control usable at narrow viewport widths
 ## ADDED Requirements
 
 ### Requirement: Invitation-focused entry
-Opening the landing page with a nonblank `session` query parameter SHALL activate invitation entry, trimming surrounding whitespace and displaying the code in uppercase. Missing, empty, or whitespace-only values SHALL use normal entry. Invitation entry SHALL display a "Join session <code>" heading, the code as noneditable context rather than a session-code input, a visibly and programmatically labeled "Your name" field, and one primary "Join session" action. The page SHALL NOT claim the session exists before a successful join.
+Opening the landing page with a nonblank `session` query parameter SHALL activate invitation entry, trimming surrounding whitespace and displaying the code in uppercase. Missing, empty, or whitespace-only values SHALL use normal entry. Invitation entry SHALL display a right-aligned "Joining session <code>" heading as the sole display of the code, a visible and programmatically associated "Your name:" label beside and vertically centered with the name field, and one primary "Join session" action. The landing-page tagline SHALL be hidden while invitation entry is active. The page SHALL NOT claim the session exists before a successful join.
 
 #### Scenario: Opening a shared session link
 - **WHEN** a user opens `/?session=7ugpct`
-- **THEN** the heading reads "Join session 7UGPCT", the name field and primary Join session action are shown, and the normal Create action and editable session-code field are absent
+- **THEN** the right-aligned heading reads "Joining session 7UGPCT", the name field with its adjacent "Your name:" label and primary Join session action are shown, and the tagline, normal Create action, and editable session-code field are absent
 
 #### Scenario: Opening without a usable invitation
 - **WHEN** a user opens the page with no session parameter or with an empty or whitespace-only session value
