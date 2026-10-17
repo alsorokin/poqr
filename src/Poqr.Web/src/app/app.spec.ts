@@ -107,7 +107,9 @@ describe('App', () => {
     const sessionCodeInput = compiled.querySelector<HTMLInputElement>('#session-code');
 
     expect(compiled.querySelector('.session-entry')).not.toBeNull();
-    expect(compiled.querySelector('.subtitle')?.textContent).toContain('Anonymous sessions');
+    expect(compiled.querySelector('.subtitle')?.textContent).toBe(
+      'Planning poker for teams. Free and simple. No sign-up, just share a link.'
+    );
     expect(compiled.querySelector('.session-divider')?.textContent).toContain('or join an existing session');
     expect(compiled.querySelector('.create-path h2')?.textContent).toContain('Start a new session');
     expect(compiled.querySelector('.join-path h2')?.textContent).toContain('Join an existing session');
